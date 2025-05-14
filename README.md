@@ -4,7 +4,7 @@ created: 2025-05-14
 tags: [rust, roadmap, programming]
 ---
 
-# 🦀 Complete Rust Mastery Roadmap
+# 🦀 complete rust mastery roadmap
 
 > A fully structured, in-depth roadmap to becoming a systems-level Rust expert, ideal for Obsidian.
 
