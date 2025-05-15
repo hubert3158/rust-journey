@@ -1,5 +1,6 @@
 fn main() {
     // number_guessing_game()
+    calculator()
 }
 
 // 1. Generate a random number between 1–100
@@ -53,5 +54,106 @@ fn number_guessing_game() {
 // 2. Prompt for an operator (`+`, `-`, `*`, `/`)
 // 3. Print the result using `match`
 // 4. Loop until the user types `exit`
-#[allow(dead_code)]
-fn calculator() {}
+fn calculator() {
+    let mut first_number: String = String::new();
+    let mut second_number: String = String::new();
+    let mut operator: String = String::new();
+
+    let exit: bool = false;
+
+    while !exit {
+        println!("{}", "Please provide first number");
+        std::io::stdin()
+            .read_line(&mut first_number)
+            .expect("OOps ");
+        if first_number.trim().eq_ignore_ascii_case("exit") {
+            break;
+        }
+
+        let first_number_int: f32 = match first_number.trim().parse() {
+            Ok(t) => t,
+            Err(_) => {
+                println!("Please provide a digit");
+                first_number.clear();
+                second_number.clear();
+                operator.clear();
+                continue;
+            }
+        };
+
+        println!("{}", "Please provide second number");
+        std::io::stdin()
+            .read_line(&mut second_number)
+            .expect("OOps ");
+
+        if second_number.trim().eq_ignore_ascii_case("exit") {
+            break;
+        }
+        let second_number_int: f32 = match second_number.trim().parse() {
+            Ok(t) => t,
+            Err(_) => {
+                println!("Please provide a digit");
+                first_number.clear();
+                second_number.clear();
+                operator.clear();
+                continue;
+            }
+        };
+
+        println!("{}", "Please provide operator");
+        std::io::stdin().read_line(&mut operator).expect("OOps ");
+        if operator.trim().eq_ignore_ascii_case("exit") {
+            break;
+        }
+
+        match operator.trim() {
+            "+" => {
+                println!(
+                    "Calculating {}{}{} and result is:{}",
+                    first_number_int,
+                    operator.trim(),
+                    second_number_int,
+                    first_number_int + second_number_int
+                );
+            }
+            "-" => {
+                println!(
+                    "Calculating {}{}{} and result is:{}",
+                    first_number_int,
+                    operator.trim(),
+                    second_number_int,
+                    first_number_int - second_number_int
+                );
+            }
+            "*" => {
+                println!(
+                    "Calculating {}{}{} and result is:{}",
+                    first_number_int,
+                    operator.trim(),
+                    second_number_int,
+                    first_number_int * second_number_int
+                );
+            }
+            "/" => {
+                if second_number_int == 0.0 {
+                    println!("oohoo there , cant divide by 0");
+                } else {
+                    println!(
+                        "Calculating {}{}{} and result is:{}",
+                        first_number_int,
+                        operator.trim(),
+                        second_number_int,
+                        first_number_int / second_number_int
+                    );
+                }
+            }
+            _ => {
+                println!("no match");
+            }
+        }
+
+        first_number.clear();
+        second_number.clear();
+        operator.clear();
+    }
+}
