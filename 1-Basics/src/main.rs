@@ -1,6 +1,9 @@
+use std::io::stdin;
+
 fn main() {
     // number_guessing_game()
-    calculator()
+    // calculator()
+    temperature_converter()
 }
 
 // 1. Generate a random number between 1–100
@@ -54,6 +57,7 @@ fn number_guessing_game() {
 // 2. Prompt for an operator (`+`, `-`, `*`, `/`)
 // 3. Print the result using `match`
 // 4. Loop until the user types `exit`
+#[allow(dead_code)]
 fn calculator() {
     let mut first_number: String = String::new();
     let mut second_number: String = String::new();
@@ -155,5 +159,44 @@ fn calculator() {
         first_number.clear();
         second_number.clear();
         operator.clear();
+    }
+}
+
+// **🎯 Goal:** Convert temperature between Celsius and Fahrenheit.
+//
+// 1. Ask for temperature value
+// 2. Ask for direction (`C→F` or `F→C`)
+// 3. Display the result
+// 4. Loop until exit
+//
+// **Formulae**
+//
+// ```text
+// F = C × 9/5 + 32
+// C = (F − 32) × 5/9
+// ```
+// ````
+#[allow(dead_code)]
+fn temperature_converter() {
+    let mut temp_value: String = String::new();
+    let mut option: String = String::new();
+    println!("Please provide temperature value");
+    stdin().read_line(&mut temp_value).expect("Invlid input");
+    let temp_int = temp_value.trim().parse::<f32>().expect("noo");
+    println!("What is the direction?");
+    println!("1) C → F");
+    println!("2) F → C");
+    stdin().read_line(&mut option).expect("Invalid input");
+
+    match option.trim() {
+        "1" => {
+            println!("{}°F", (temp_int * (9.0 / 5.0)) + 32.0)
+        }
+        "2" => {
+            println!("{}°C", ((temp_int - 32.0) * (5.0 / 9.0)).trunc())
+        }
+        _ => {
+            println!("Wrong option bro")
+        }
     }
 }
