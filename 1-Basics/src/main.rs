@@ -3,7 +3,8 @@ use std::io::stdin;
 fn main() {
     // number_guessing_game()
     // calculator()
-    temperature_converter()
+    //temperature_converter()
+    report_card_generator()
 }
 
 // 1. Generate a random number between 1–100
@@ -198,5 +199,87 @@ fn temperature_converter() {
         _ => {
             println!("Wrong option bro")
         }
+    }
+}
+
+// **🎯 Goal:** Build a CLI app that collects student data and generates a formatted grade report.
+//
+// ### Features
+//
+// - Take student name and **three** subject scores as input
+// - Compute the average score with a function
+// - Assign letter grades
+//
+// ```text
+// A: 90–100
+// B: 80–89
+// C: 70–79
+// D: 60–69
+// F: <60
+// ```
+//
+// - Store each student as a tuple inside a `Vec`
+// - Loop to allow entering multiple students (type `exit` to finish)
+// - On exit, display the full report, e.g.:
+//
+// ```text
+// ## Name      | Average | Grade
+// Subash       |  91.67  |  A
+// ```
+
+#[allow(dead_code)]
+fn report_card_generator() {
+    let mut vec = Vec::<(String, String, String)>::new();
+
+    loop {
+        // get name
+        let mut name = String::new();
+        println!("Please state your name");
+        stdin().read_line(&mut name).expect("Input Error");
+        if name.trim() == "exit" {
+            break;
+        }
+
+        //get scores
+        let mut subject_one = String::new();
+        println!("subject 1 score");
+        stdin().read_line(&mut subject_one).expect("Input Error");
+        let subject_one_int = subject_one.trim().parse::<f32>().expect("Oh noooo");
+
+        let mut subject_two = String::new();
+        println!("subject 2 score");
+        stdin().read_line(&mut subject_two).expect("Input Error");
+        let subject_two_int = subject_two
+            .trim()
+            .parse::<f32>()
+            .expect("Something went wrong");
+
+        let mut subject_three = String::new();
+        println!("subject 3 score");
+        stdin().read_line(&mut subject_three).expect("Input Error");
+        let subject_three_int = subject_three
+            .trim()
+            .parse::<f32>()
+            .expect("Something went wrong");
+
+        let average: f32 = (subject_one_int + subject_two_int + subject_three_int) / 3.0;
+        let average_str = format!("{:.2}", average);
+
+        let grade = match average {
+            90.0..100.0 => "A",
+            80.0..89.0 => "B",
+            70.0..79.0 => "C",
+            60.0..69.0 => "D",
+            0.0..60.0 => "F",
+            _ => "NaN",
+        };
+
+        let student_info = (name, average_str, grade.to_string());
+        vec.push(student_info);
+    }
+
+    println!("{:^10} | {:^10} | {:^10}", "Name", "Average", "Grade");
+    for info in vec {
+        println!("{:^10} | {:^10} | {:^10}", info.0.trim(), info.1, info.2);
     }
 }
