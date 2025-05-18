@@ -1,10 +1,14 @@
-use std::io::stdin;
+use std::{
+    io::{Write, stdin, stdout},
+    string, usize,
+};
 
 fn main() {
     // number_guessing_game()
     // calculator()
     //temperature_converter()
-    report_card_generator()
+    // report_card_generator()
+    personal_finance_tracker()
 }
 
 // 1. Generate a random number between 1–100
@@ -282,4 +286,85 @@ fn report_card_generator() {
     for info in vec {
         println!("{:^10} | {:^10} | {:^10}", info.0.trim(), info.1, info.2);
     }
+}
+
+// **🎯 Goal:** Build a basic personal CLI finance tracker.
+//
+// ### Features
+//
+// 1. Ask user for starting balance
+// 2. Loop:
+//
+//    - Ask **Deposit** or **Withdraw**
+//    - Take amount
+//    - Apply operation
+//    - Show updated balance
+//    - Block withdrawals that cause negative balance
+//
+// 3. Type `exit` to finish
+// 4. At the end, show a full transaction log
+//
+// ### Example
+//
+// ```text
+// Start balance: 1000
+// Action (deposit/withdraw/exit): deposit
+// Amount: 200
+// New Balance: 1200
+//
+// Action: withdraw
+// Amount: 300
+// New Balance: 900
+// ...
+// Final Log:
+// +200
+// -300
+// Final Balance: 900
+//
+
+#[allow(dead_code)]
+fn personal_finance_tracker() {
+    let mut balance = string::String::new();
+    print!("Start balance: ");
+    stdout().flush().unwrap();
+    stdin().read_line(&mut balance).expect("invalid");
+    let mut balance_int = balance.trim().parse::<usize>().expect("Not a number");
+    let mut log = Vec::<String>::new();
+
+    loop {
+        let mut action = string::String::new();
+        let mut amount = string::String::new();
+        print!("Action (deposit/withdraw/exit): ");
+        stdout().flush().unwrap();
+        stdin().read_line(&mut action).expect("invalid input");
+        if action.trim() == "exit" {
+            break;
+        }
+        print!("Amount: ");
+        stdout().flush().unwrap();
+        stdin().read_line(&mut amount).expect("invalid input");
+        let amount_int = amount.trim().parse::<usize>().expect("Not a integer");
+
+        match action.trim() {
+            "deposit" => {
+                println!("New balance: {}", balance_int + amount_int);
+                balance_int = balance_int + amount_int;
+                let log_val = format!("+{}", amount_int);
+                log.push(log_val);
+            }
+            "withdraw" => {
+                println!("New balance: {}", balance_int - amount_int);
+                balance_int = balance_int - amount_int;
+                let log_val = format!("-{}", amount_int);
+                log.push(log_val);
+            }
+            _ => println!("what?"),
+        }
+    }
+
+    println!("Final Log:");
+    for val in log {
+        println!("{}", val)
+    }
+    println!("Final Balance {}", balance_int);
 }
