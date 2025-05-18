@@ -1,136 +1,154 @@
+Absolutely — here’s your **rewritten Phase 2 Rust checklist**, refined so that the **tasks themselves** push you into every major concept you need to master. No constraints listed — just **rich functionality** that makes the learning unavoidable.
+
+---
+
 # 🦀 Rust Mastery: Phase 2 Completion Checklist
 
-## ✅ Ownership, Borrowing & Lifetimes (Phase 2)
+## ✅ Master These Core Concepts
 
-- [ ] Understand how values are moved and reused safely
-- [ ] Learn when and how to clone or copy data
-- [ ] Use shared and mutable references in useful ways
-- [ ] Build functions that return borrowed data
-- [ ] Design structs that hold references with lifetimes
-- [ ] Prevent invalid access by respecting borrowing rules
-- [ ] Grasp lifetime elision and when to be explicit
-
----
-
-## 🔨 Suggested Mini Projects
-
-### 📌 1. Text Formatter CLI
-
-**🎯 Goal:** Create a CLI tool that formats text for a report.
-
-1. Accept multi-line input from the user
-2. Clean it: trim whitespace, lowercase all lines
-3. Store and print formatted lines
-4. Add a summary: total characters, lines, and first/last word of each line
-
-**What you’ll learn while building:**
-
-- Ownership of strings across lines
-- Borrowing lines without cloning
-- Handling `String` vs `&str` clearly
-- Returning references from helper functions
+- [ ] Move and reuse values safely across scopes
+- [ ] Decide when to clone or borrow
+- [ ] Work with both shared (`&T`) and mutable (`&mut T`) references
+- [ ] Write functions that return borrowed data
+- [ ] Design structs that hold borrowed data using lifetimes
+- [ ] Avoid compile errors by respecting borrowing rules
+- [ ] Understand lifetime elision and when explicit lifetimes are needed
 
 ---
 
-### 📌 2. Editable Todo List
-
-**🎯 Goal:** Build a terminal todo app where the user can add, list, edit, and delete tasks.
-
-1. Tasks are stored in a `Vec<String>`
-2. When editing a task, allow updating it without cloning everything
-3. When listing tasks, pass them as borrowed references
-4. On exit, show summary with longest/shortest task
-
-**What you'll practice:**
-
-- Borrowing for printing vs modifying
-- Mutably updating elements inside collections
-- Ownership transfer vs shared reference in edits
+## 🔨 Phase 2 Projects — No Constraints, Just Real Work
 
 ---
 
-### 📌 3. Keyword Highlighter
+### 📌 1. Text Indexer CLI
 
-**🎯 Goal:** Accept a paragraph and highlight a keyword.
+**🎯 Goal:** Create a CLI that processes and indexes lines of user input.
 
-1. Let the user input a paragraph and a keyword
-2. Search the keyword without reallocating strings
-3. Print each line with the keyword bolded (just wrap with `**...**`)
+#### Your tool must:
 
-**Concepts reinforced:**
+- Accept multiple lines of input from the user
+- Store all lines
+- Print a clean report showing:
 
-- Borrowing slices of strings
-- Returning highlighted borrowed slices
-- Avoiding unnecessary `clone`s or new allocations
+  - total number of lines
+  - total character count (excluding whitespace)
+  - the longest word
+  - the full line that contains the longest word
+  - a list of first and last words from each line
 
----
-
-## 🛠️ Challenge Project 1: Contact Book (Borrowed Data)
-
-**🎯 Goal:** Build a CLI contact manager that keeps lightweight records using borrowed data.
-
-### Features
-
-- Accept name and email for each contact
-- Store as `&str` references to a main buffer (for memory efficiency)
-- Show the contact list any time
-- Validate for duplicate emails
-
-**Why it matters:**
-
-- You'll learn struct lifetimes naturally
-- You’ll see how to store borrowed references inside collections
-- You’ll practice lifetimes for both struct and functions
+📘 _This naturally teaches_:
+ownership of `String`, borrowing lines for analysis, returning references from helpers, slicing strings, and tracking lifetimes.
 
 ---
 
-## 🛠️ Challenge Project 2: Journal Viewer with Line Access
+### 📌 2. Todo Manager CLI (Full CRUD + Analytics)
 
-**🎯 Goal:** Build a CLI app that loads a journal file and lets the user view, search, or extract lines.
+**🎯 Goal:** Build a task management app for the terminal.
 
-### Features
+#### Your app must:
 
-1. Load entire file into memory (`String`)
-2. Let user:
-   - View specific line by index
-   - Search for lines containing a keyword
-   - Extract a range of lines (by reference)
+- Add, list, edit, and delete tasks
+- Support viewing all tasks
+- Support editing by replacing a portion of a task
+- Support searching tasks by keyword
+- Highlight the keyword in search results
+- Show the task with:
 
-**This forces you to:**
+  - the most words
+  - the fewest characters
 
-- Borrow slices from the original buffer
-- Respect borrowing rules when returning line refs
-- Use lifetime annotations in helper functions
+- Generate previews for each task (first sentence or 10 words)
+- Support sorting tasks alphabetically and by length
 
----
-
-## 🛠️ Challenge Project 3: Smart Notes with Preview
-
-**🎯 Goal:** Build a notes app that shows a preview of each note without copying its content.
-
-### Features
-
-1. Let user add full notes (`String`)
-2. Preview shows only the first sentence (as `&str`)
-3. View all notes or only previews
-4. Optional: allow updating a note’s content
-
-**You'll be dealing with:**
-
-- Slicing strings and returning references
-- Handling both mutable and immutable references
-- Designing preview functions with lifetimes
+📘 _This will cover_:
+shared vs mutable references, mutable borrowing of items in a `Vec`, slicing, lifetimes in return values, and writing functions with reference-based input/output.
 
 ---
 
-## 🛠️ Challenge Project 4: CLI Library System (Books & Borrowers)
+### 📌 3. Paragraph Highlighter
 
-**🎯 Goal:** Simulate a small library where users can borrow books.
+**🎯 Goal:** Accept a paragraph and a keyword, and show keyword-highlighted results.
 
-### Features
+#### Your app must:
 
-1. Each `Book` has a title and author (`String`)
-2. Track who borrowed each book using a struct like:
+- Accept a paragraph of text from the user
+- Accept a search keyword
+- Display the paragraph with all occurrences of the keyword highlighted (e.g., `**word**`)
+- Support previewing the sentence in which the keyword appears
+- Let the user copy out only those matched lines
+
+📘 _You'll use_:
+slices of `String`, borrowed data for rendering, and return-by-reference helpers. Keyword matching will push you into handling string views and lifetimes naturally.
+
+---
+
+### 🛠️ Challenge Project 1: Contact Book with Lightweight Data
+
+**🎯 Goal:** Build a lightweight contact manager.
+
+#### Your contact manager must:
+
+- Accept name and email input
+- Store the data using one shared `String` buffer
+- Store only references in the contact records
+- Support:
+
+  - listing all contacts
+  - detecting duplicate emails
+  - editing an existing contact’s name or email
+
+📘 _This project will force_:
+structs with lifetimes, reference storage, and borrowing across multiple layers (input -> storage -> display).
+
+---
+
+### 🛠️ Challenge Project 2: Journal Reader
+
+**🎯 Goal:** Build a journal file reader and navigator.
+
+#### Features:
+
+- Load the entire journal as one big `String`
+- Allow:
+
+  - viewing a line by index
+  - searching lines by a word
+  - extracting and printing a range of lines
+  - slicing a specific sentence for preview
+
+📘 _This teaches_:
+how to return slices of a large string, borrow lines safely from a single source, use helper functions with lifetime annotations, and prevent invalid access.
+
+---
+
+### 🛠️ Challenge Project 3: Smart Notes with Slicing
+
+**🎯 Goal:** Create a notes system with preview functionality.
+
+#### Features:
+
+- Accept long-form notes
+- Store all notes
+- Allow:
+
+  - viewing full notes
+  - previewing only the first sentence or N words
+  - editing a note in-place
+  - printing the note with most characters
+
+📘 _Concepts baked in_:
+slicing `String` into `&str`, editing through `&mut`, previewing via borrowed views, and safely handling lifetime-bound returns.
+
+---
+
+### 🛠️ Challenge Project 4: CLI Library System
+
+**🎯 Goal:** Simulate book borrowing and returning in a small library system.
+
+#### You must:
+
+- Store books (title, author) using `String`
+- Track who borrowed which book using a struct with references like:
 
 ```rust
 struct BorrowRecord<'a> {
@@ -139,13 +157,17 @@ struct BorrowRecord<'a> {
 }
 ```
 
-3. Show who borrowed what
-4. Ensure books are returned before re-borrowed
+- Prevent re-borrowing without returning
+- Allow listing who borrowed what
+- Show available books
 
-**Teaches you:**
-
-- Struct lifetimes
-- Ownership of records vs borrowing for tracking
-- Real-life borrow enforcement
+📘 _This will make you_:
+design structs with lifetimes, return references from collections, and handle borrowing logic in a real-world model with actual constraints.
 
 ---
+
+## ✅ By finishing these:
+
+You won't just "know about" ownership and borrowing — you'll **live it**. Every task makes you feel the compiler's rules and rewards.
+
+Let me know if you'd like this as a printable checklist or Obsidian template.
