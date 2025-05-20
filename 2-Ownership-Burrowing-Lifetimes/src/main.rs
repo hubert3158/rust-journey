@@ -27,7 +27,8 @@ fn text_indexer() {
     let mut no_of_lines = 0;
     let mut first_and_last_words: Vec<(String, String)> = Vec::new();
     let mut total_characters = 0;
-    let mut longest_word = "";
+    let mut longest_word = String::new();
+    let mut line_with_longest_word = String::new();
     loop {
         let mut input_line = String::new();
         stdin()
@@ -40,6 +41,11 @@ fn text_indexer() {
         add_to_paragraph(&mut paragraph, input_line.trim());
         add_first_and_last_words(&mut first_and_last_words, String::from(input_line.trim()));
         count_characters(input_line.trim(), &mut total_characters);
+        save_longest_word_and_sentence(
+            input_line.trim(),
+            &mut longest_word,
+            &mut line_with_longest_word,
+        );
     }
     println!("Report");
     println!("Total no of Lines: {}", no_of_lines);
@@ -47,12 +53,29 @@ fn text_indexer() {
         println!("{}, {}", words_tuple.0, words_tuple.1);
     }
     println!("Total characters: {}", total_characters);
+    println!("Longest word: {}", longest_word);
+    println!("Longest line: {}", line_with_longest_word);
+
     fn count_characters(input_line: &str, total_characters: &mut i32) {
         input_line.chars().for_each(|c| {
             if c != ' ' {
                 *total_characters += 1;
             }
         });
+    }
+
+    fn save_longest_word_and_sentence(
+        input_line: &str,
+        longest_word: &mut String,
+        full_line_with_longest_word: &mut String,
+    ) {
+        let values: Vec<_> = input_line.split(' ').collect();
+        for value in values {
+            if value.chars().count() > longest_word.chars().count() {
+                *longest_word = String::from(value);
+                *full_line_with_longest_word = String::from(input_line);
+            }
+        }
     }
 
     fn add_to_paragraph(paragraph: &mut String, input_line: &str) {
@@ -62,6 +85,12 @@ fn text_indexer() {
     fn add_first_and_last_words(words_list: &mut Vec<(String, String)>, input_line: String) {
         let words: Vec<_> = input_line.split(' ').collect();
         let words_size = words.len();
+
+        //optmized way to do
+        // if let Some((first, last)) = words.first().zip(words.last()) {
+        //     words_list.push((first.to_string(), last.to_string()));
+        // }
+
         if words_size > 0 {
             let first_letter: String = words
                 .get(0)
