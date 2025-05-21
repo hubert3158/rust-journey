@@ -1,6 +1,7 @@
 use std::io::stdin;
 fn main() {
-    text_indexer();
+    // text_indexer();
+    task_management_app();
 }
 
 // ### 📌 1. Text Indexer CLI
@@ -103,6 +104,60 @@ fn text_indexer() {
             words_list.push((first_letter, last_letter));
         } else {
             words_list.push((String::new(), String::new()));
+        }
+    }
+}
+
+// ### 📌 2. Todo Manager CLI (Full CRUD + Analytics)
+//
+// **🎯 Goal:** Build a task management app for the terminal.
+//
+// #### Your app must:
+//
+// - Add, list, edit, and delete tasks
+// - Support viewing all tasks
+// - Support editing by replacing a portion of a task
+// - Support searching tasks by keyword
+// - Highlight the keyword in search results
+// - Show the task with:
+//
+//   - the most words
+//   - the fewest characters
+//
+// - Generate previews for each task (first sentence or 10 words)
+// - Support sorting tasks alphabetically and by length
+//
+// 📘 _This will cover_:
+// shared vs mutable references, mutable borrowing of items in a `Vec`, slicing, lifetimes in return values, and writing functions with reference-based input/output.
+//
+#[allow(dead_code)]
+fn task_management_app() {
+    let mut tasks: Vec<String> = Vec::new();
+
+    let mut new_task = String::new();
+    let mut new_task_edit = String::from("this is a test");
+
+    stdin()
+        .read_line(&mut new_task)
+        .expect("Couldnt add a task");
+
+    add_tasks(&mut tasks, new_task);
+
+    list_tasks(&tasks);
+
+    stdin()
+        .read_line(&mut new_task_edit)
+        .expect("Couldnt add a task");
+
+    fn add_tasks(tasks: &mut Vec<String>, new_task: String) {
+        tasks.push(new_task.trim().to_string());
+    }
+
+    fn list_tasks(tasks: &Vec<String>) {
+        let mut count = 1;
+        for each_task in tasks {
+            println!("{}). {}", count, each_task);
+            count += 1;
         }
     }
 }
