@@ -1,7 +1,7 @@
 use std::io::stdin;
 fn main() {
     // text_indexer();
-    task_management_app();
+    // task_management_app();
 }
 
 // ### 📌 1. Text Indexer CLI
@@ -133,30 +133,62 @@ fn text_indexer() {
 #[allow(dead_code)]
 fn task_management_app() {
     let mut tasks: Vec<String> = Vec::new();
+    let mut option: String = String::new();
+    loop {
+        println!("Please select an option:\n1)Add Task\n2)Update Task\n3)List Task\n4)Exit");
+        stdin().read_line(&mut option).expect("Couldnt add a task");
+        match option.trim() {
+            "1" => {
+                add_tasks(&mut tasks);
+            }
+            "2" => {
+                update_task(&mut tasks);
+            }
 
-    let mut new_task = String::new();
-    let mut new_task_edit = String::from("this is a test");
+            "3" => {
+                list_tasks(&tasks);
+            }
+            "4" => {
+                break;
+            }
+            _ => {
+                println!("Wrong option")
+            }
+        }
 
-    stdin()
-        .read_line(&mut new_task)
-        .expect("Couldnt add a task");
+        option.clear();
+    }
+    fn update_task(tasks: &mut Vec<String>) {
+        println!("which task do you want to update?");
+        let mut task_no = String::new();
+        stdin().read_line(&mut task_no).expect("Couldnt add a task");
+        let task_no_int: usize = task_no.trim().parse().expect("Not a valid option");
+        if task_no_int > tasks.len() {
+            println!("Invalid number selected");
+            return;
+        }
+        println!("Enter a task you want to replace it with");
+        let mut new_task = String::new();
+        stdin()
+            .read_line(&mut new_task)
+            .expect("Couldnt add a task");
+        tasks[task_no_int - 1] = new_task.trim().to_string();
+        println!("Successfully updated");
+    }
 
-    add_tasks(&mut tasks, new_task);
-
-    list_tasks(&tasks);
-
-    stdin()
-        .read_line(&mut new_task_edit)
-        .expect("Couldnt add a task");
-
-    fn add_tasks(tasks: &mut Vec<String>, new_task: String) {
+    fn add_tasks(tasks: &mut Vec<String>) {
+        let mut new_task = String::new();
+        println!("please enter a one line task");
+        stdin()
+            .read_line(&mut new_task)
+            .expect("Couldnt add a task");
         tasks.push(new_task.trim().to_string());
     }
 
     fn list_tasks(tasks: &Vec<String>) {
         let mut count = 1;
         for each_task in tasks {
-            println!("{}). {}", count, each_task);
+            println!("{}) {}", count, each_task);
             count += 1;
         }
     }
