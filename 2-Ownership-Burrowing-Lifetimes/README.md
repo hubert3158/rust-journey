@@ -170,4 +170,3 @@ design structs with lifetimes, return references from collections, and handle bo
 
 You won't just "know about" ownership and borrowing — you'll **live it**. Every task makes you feel the compiler's rules and rewards.
 
-Let me know if you'd like this as a printable checklist or Obsidian template.
