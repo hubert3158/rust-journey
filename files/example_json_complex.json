@@ -1,0 +1,51 @@
+{
+  "name": "Alice",
+  "age": 30,
+  "height_m": 1.68,
+  "is_active": true,
+  "is_admin": false,
+  "middle_name": null,
+  "balance": -1542.75,
+  "big_number": 9007199254740991,
+  "tiny_number": 0.0000123,
+  "tags": ["rust", "parser", "json"],
+  "scores": [95, 87.5, 100, 0],
+  "empty_array": [],
+  "empty_object": {},
+  "address": {
+    "street": "742 Evergreen Terrace",
+    "city": "Springfield",
+    "zip": "49007",
+    "coordinates": {
+      "lat": 39.7817,
+      "lng": -89.6501
+    }
+  },
+  "favorite_quote": "She said \"hello\" and left.\nThen came back.",
+  "unicode_sample": "caf\u00e9 \u2014 na\u00efve r\u00e9sum\u00e9",
+  "projects": [
+    {
+      "title": "SmartMCA",
+      "stack": ["Spring Boot", "Next.js", "PostgreSQL"],
+      "active": true,
+      "team_size": 5,
+      "metadata": null
+    },
+    {
+      "title": "Paragraph Highlighter",
+      "stack": ["Rust"],
+      "active": false,
+      "team_size": 1,
+      "metadata": {
+        "lines_of_code": 412,
+        "uses_borrowing": true
+      }
+    }
+  ],
+  "matrix": [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+  ],
+  "mixed_array": [1, "two", 3.0, true, null, { "nested": "object" }, [9, 8, 7]]
+}
