@@ -228,10 +228,24 @@ fn paragraph_highlighter() {
     highlighter(search_keyword, &mut paragraph);
 
     fn highlighter(search_keyword: String, paragraph: &mut String) {
-        let pos: usize = paragraph
-            .rfind(search_keyword.as_str())
-            .expect("error finding the pos of match");
+        let posOption: Option<usize> = paragraph.find(search_keyword.as_str());
 
-        println!("Position is: {}", pos);
+        //I dont understand this yet -> destructuring a enum?
+        if let Some(pos) = posOption {
+            println!("Found at {}", pos);
+        } else {
+            println!("Not found");
+        }
+
+        // above is same is below
+
+        match posOption {
+            Some(pos) => {
+                println!("Found at {}", pos);
+            }
+            None => {
+                println!("Not found");
+            }
+        }
     }
 }
