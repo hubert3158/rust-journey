@@ -227,25 +227,11 @@ fn paragraph_highlighter() {
 
     highlighter(search_keyword, &mut paragraph);
 
+    for (i, m) in "1abcabc2".match_indices("abc") {
+        println!("{i} -> {m}");
+    }
+
     fn highlighter(search_keyword: String, paragraph: &mut String) {
-        let posOption: Option<usize> = paragraph.find(search_keyword.as_str());
-
-        //I dont understand this yet -> destructuring a enum?
-        if let Some(pos) = posOption {
-            println!("Found at {}", pos);
-        } else {
-            println!("Not found");
-        }
-
-        // above is same is below
-
-        match posOption {
-            Some(pos) => {
-                println!("Found at {}", pos);
-            }
-            None => {
-                println!("Not found");
-            }
-        }
+        let pos_option = paragraph.match_indices(search_keyword.as_str());
     }
 }
