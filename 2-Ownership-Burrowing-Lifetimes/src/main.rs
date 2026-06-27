@@ -47,8 +47,11 @@ fn text_indexer() -> Result<(), Box<dyn std::error::Error>> {
     let mut total_characters = 0;
     let mut longest_word = String::new();
     let mut line_with_longest_word = String::new();
+    println!("Please type a task");
+    println!("type enter on a new line to exit");
     loop {
         let mut input_line = String::new();
+
         stdin()
             .read_line(&mut input_line)
             .expect("Something went wrong");
