@@ -1,6 +1,7 @@
 //! Phase 3 projects — build each from scratch. Features only; figure out the "how" yourself.
 //! Do them in order. Prove each one works with your own test cases before moving on.
 //!
+
 #![allow(unused_variables)]
 pub fn main() {
     println!("custom-data-types started");
@@ -18,54 +19,65 @@ pub fn main() {
 //   tuple structs and the newtype (wrapper) pattern, attaching methods to your own types,
 //   deriving common traits (Debug, Clone, Copy, PartialEq), and using the type system for safety.
 
+#[derive(Debug, PartialEq)]
+struct Dollars(u64, u64);
+#[derive(Debug, PartialEq)]
+struct Cents(u64);
+
 pub fn money_handler() {
-    #[derive(Debug)]
-    struct Dollars(u64, u64);
-    #[derive(Debug)]
-    struct Cents(u64);
-
-    trait MoneyAdd<T> {
-        fn add(&self, val: T) -> T;
-    }
-
-    impl MoneyAdd<Dollars> for Dollars {
-        fn add(&self, val: Dollars) -> Dollars {
-            Dollars(self.0 + val.0, self.1)
-        }
-    }
-    impl MoneyAdd<Cents> for Cents {
-        fn add(&self, val: Cents) -> Cents {
-            Cents(self.0 + val.0)
-        }
-    }
-
-    impl Dollars {
-        fn new(val: u64) -> Self {
-            Dollars(val, 0)
-        }
-        fn to_cents(&self) -> Cents {
-            Cents(self.0 * 100 + self.1)
-        }
-    }
-
-    impl Cents {
-        fn to_dollars(&self) -> Dollars {
-            Dollars(self.0 / 100, self.0 % 100)
-        }
-    }
-
     println!("Converting cent amount to dollars and back");
 
-    let cent_amount = 213;
     let cents = Cents(213);
     println!("{:?}", cents);
-    let cents = cents.add(Cents(5));
-    println!("added 5 cents -> {:?}", cents);
-    let dollars = cents.to_dollars();
+    let cents1 = cents + Cents(5);
+    println!("added 5 cents -> {:?}", cents1);
+    let dollars = cents1.to_dollars();
     println!("cents to dollars -> {:?}", dollars);
     println!("added 5 dollars -> {:?}", dollars.add(Dollars::new(5)));
     let cents = dollars.to_cents();
     println!("dollars to cents ->{:?}", cents);
+}
+
+impl Dollars {
+    fn new(val: u64) -> Self {
+        Dollars(val, 0)
+    }
+    fn to_cents(&self) -> Cents {
+        Cents(self.0 * 100 + self.1)
+    }
+}
+
+impl Cents {
+    fn to_dollars(&self) -> Dollars {
+        Dollars(self.0 / 100, self.0 % 100)
+    }
+}
+
+use std::ops::Add;
+
+impl Add for Dollars {
+    type Output = Dollars;
+    fn add(self, val: Dollars) -> Dollars {
+        Dollars(
+            (self.0 + val.0) + ((self.1 + val.1) / 100),
+            (self.1 + val.1) % 100,
+        )
+    }
+}
+impl Add for Cents {
+    type Output = Cents;
+    fn add(self, val: Cents) -> Cents {
+        Cents(self.0 + val.0)
+    }
+}
+
+#[test]
+fn dollars_carry() {
+    assert_eq!(Dollars(1, 12).add(Dollars(1, 90)), Dollars(3, 2));
+}
+#[test]
+fn cents_addition() {
+    assert_eq!(Cents(90).add(Cents(12)), Cents(102));
 }
 
 // ===== PROGRAM 2 — Payment tracker =====
