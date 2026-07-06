@@ -1,4 +1,3 @@
-//! Phase 3 projects — build each from scratch. Features only; figure out the "how" yourself.
 //! Do them in order. Prove each one works with your own test cases before moving on.
 //! Full specs + done-when checklist: ../README.md
 //! The phase's one big idea: make illegal states unrepresentable.
@@ -9,7 +8,7 @@ use jiff::{Zoned, civil::Date};
 pub fn main() {
     println!("custom-data-types started");
     // money_handler();
-    payment();
+    payment_demo();
 }
 
 // ===== PROGRAM 1 — Money handler =====
@@ -112,7 +111,7 @@ pub fn main() {
 //   (Phase 15 rebuilds this with typestate so illegal transitions won't even compile —
 //   keep this version for the side-by-side comparison.)
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 enum Payment {
     Scheduled {
         run_date: Date,
@@ -136,7 +135,7 @@ enum Payment {
 type TransitonError = String;
 
 impl Payment {
-    fn status(&mut self) {
+    fn status(&self) {
         match self {
             Payment::Scheduled { run_date } => println!("Scheduled, Run Date: {}", run_date),
             Payment::Submitted {
@@ -146,7 +145,7 @@ impl Payment {
                 "Submitted , Submitted at:{}, Rail Used:{}",
                 submitted_at, rail_used
             ),
-            Payment::Settled { setteled_at } => println!("Settled, Settled At>{}", setteled_at),
+            Payment::Settled { setteled_at } => println!("Settled, Settled at: {}", setteled_at),
             Payment::Returned {
                 reason_code,
                 human_message,
@@ -159,91 +158,228 @@ impl Payment {
             }
         }
     }
-    fn progress(self, event: Events) -> Result<Self, TransitonError> {
+    fn progress(&mut self, event: Events) -> Result<(), TransitonError> {
         match self {
             Payment::Scheduled { run_date } => match event {
-                Events::Submitted => {
+                Events::Submitted { rail_used } => {
+                    let today = Zoned::now().date();
 
-                    Result::Ok(Payment::Submitted {
-                    submitted_at: Zoned::now().date(),
-                    rail_used: String::from("ACH")
-                    },
-                }),
+                    if today > *run_date {
+                        Err("Time already passed".to_string())
+                    } else if *run_date > today {
+                        Err("Not yet time to submit".to_string())
+                    } else {
+                        *self = Payment::Submitted {
+                            submitted_at: Zoned::now().date(),
+                            rail_used,
+                        };
+                        Ok(())
+                    }
+                }
                 Events::Settle => Err(String::from(
                     "You cannot directly settled a scheduled payment bro",
                 )),
-                Events::Return { reason } => Err(String::from(
+                Events::Return { reason: _ } => Err(String::from(
                     "You cannot directly settled a scheduled payment bro",
                 )),
-                Events::Cancel => Ok(Payment::Canceled {
-                    cancelled_reason: "Canceled by a user".to_string(),
-                }),
+                Events::Cancel => {
+                    *self = Payment::Canceled {
+                        cancelled_reason: "Canceled by a user".to_string(),
+                    };
+                    Ok(())
+                }
             },
             Payment::Submitted {
-                submitted_at,
-                rail_used,
+                submitted_at: _,
+                rail_used: _,
             } => match event {
-                Events::Submitted => Result::Ok(Payment::Submitted {
-                    submitted_at,
-                    rail_used,
-                }),
-                Events::Settle => Result::Ok(Payment::Settled {
-                    setteled_at: Zoned::now().date(),
-                }),
-                Events::Return { reason } => Result::Ok(Payment::Returned {
-                    reason_code: reason,
-                    human_message: "Payment returned".to_string(),
-                }),
-                Events::Cancel => Ok(Payment::Canceled {
-                    cancelled_reason: "successfully Canceled".to_string(),
-                }),
+                Events::Submitted { rail_used: _ } => Result::Ok(()),
+                Events::Settle => {
+                    *self = Payment::Settled {
+                        setteled_at: Zoned::now().date(),
+                    };
+                    Ok(())
+                }
+                Events::Return { reason } => {
+                    *self = Payment::Returned {
+                        reason_code: reason,
+                        human_message: "Payment returned".to_string(),
+                    };
+                    Ok(())
+                }
+                Events::Cancel => {
+                    *self = Payment::Canceled {
+                        cancelled_reason: "successfully Canceled".to_string(),
+                    };
+                    Ok(())
+                }
             },
-            Payment::Settled { setteled_at } => match event {
-                Events::Submitted => {
+            Payment::Settled { setteled_at: _ } => match event {
+                Events::Submitted { rail_used: _ } => {
                     Err("Not allowed to chage from settled to submitted".to_string())
                 }
-                Events::Settle => Ok(Payment::Settled { setteled_at }),
-                Events::Return { reason } => Ok(Payment::Returned {
-                    reason_code: reason,
-                    human_message: " Late return, Money refunded ".to_string(),
-                }),
+                Events::Settle => Ok(()),
+                Events::Return { reason } => {
+                    *self = Payment::Returned {
+                        reason_code: reason,
+                        human_message: " Late return, Money refunded ".to_string(),
+                    };
+                    Ok(())
+                }
                 Events::Cancel => Err("Sorry cannot cancel a settled payment".to_string()),
             },
             Payment::Returned {
-                reason_code,
-                human_message,
-            } => todo!(),
-            Payment::Canceled { cancelled_reason } => match event {
-                Events::Submitted => {
+                reason_code: _,
+                human_message: _,
+            } => match event {
+                Events::Submitted { rail_used: _ } => {
+                    Err("Cant submite returned payment".to_string())
+                }
+                Events::Settle => Err("Cant settle returned payment".to_string()),
+                Events::Return { reason: _ } => Ok(()),
+                Events::Cancel => Err("Sorry cannot cancel a returned payment".to_string()),
+            },
+            Payment::Canceled {
+                cancelled_reason: _,
+            } => match event {
+                Events::Submitted { rail_used: _ } => {
                     Err("sorry not allowed to change from canceled to returned".to_string())
                 }
                 Events::Settle => Err("sorry cancelled payment cannot be settled".to_string()),
-                Events::Return { reason } => Err("Canceled payments cant be returned".to_string()),
-                Events::Cancel => Ok(Payment::Canceled { cancelled_reason }),
+                Events::Return { reason: _ } => {
+                    Err("Canceled payments cant be returned".to_string())
+                }
+                Events::Cancel => Ok(()),
             },
         }
     }
 }
 
 enum Events {
-    Submitted,
+    Submitted { rail_used: String },
     Settle,
     Return { reason: String },
     Cancel,
 }
 
-fn payment() {
-    let mut x = Payment::Scheduled {
+fn payment_demo() {
+    //payment state 1
+    let mut payment = Payment::Scheduled {
         run_date: Zoned::now().date(),
     };
-    x.status();
-    let y = Events::Submitted;
-    let x = x.progress(y);
-    x.unwrap().status();
+
+    //illegal progresson scheduled -> return
+    let return_val = payment.progress(Events::Return {
+        reason: "ACH".to_string(),
+    });
+
+    if let Err(string) = &return_val {
+        println!("{}", string);
+    };
+
+    payment.status();
+
+    //cloning payment state  1 and cancelling it
+    let return_val = payment.clone().progress(Events::Cancel);
+    match return_val {
+        Ok(_) => println!("Cancelled the cloned submitted payment"),
+        Err(e) => {
+            eprintln!("Sorry, couldn't Cancel, {}", e)
+        }
+    }
+
+    let return_val = payment.progress(Events::Submitted {
+        rail_used: "ACH".to_string(),
+    });
+
+    let Ok(_) = return_val else {
+        println!("Progressed from scheduled to submitted");
+        return;
+    };
+
+    payment.status();
+
+    let return_val = payment.clone().progress(Events::Return {
+        reason: "bank closed".to_string(),
+    });
+    match return_val {
+        Ok(_) => println!("cloned payment is returned"),
+        Err(e) => eprintln!("issue returning{}", e),
+    }
+    let return_val = payment.progress(Events::Settle);
+    match return_val {
+        Ok(_) => println!("payment settled"),
+        Err(e) => eprintln!("issue settling payment{}", e),
+    }
+    payment.status();
 }
 
-#[test]
-fn name() {}
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    // Helper: reduces repetition and makes each test focus on the transition,
+    // not on constructing the starting state.
+    fn scheduled() -> Payment {
+        Payment::Scheduled {
+            run_date: Zoned::now().date(),
+        }
+    }
+
+    #[test]
+    fn scheduled_to_submitted() {
+        let mut payment = scheduled();
+        let event = Events::Submitted {
+            rail_used: "ACH".to_string(),
+        };
+
+        payment.progress(event).unwrap();
+
+        assert_eq!(
+            payment,
+            Payment::Submitted {
+                submitted_at: Zoned::now().date(),
+                rail_used: "ACH".to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn submitted_to_settled() {
+        let mut payment = Payment::Submitted {
+            submitted_at: Zoned::now().date(),
+            rail_used: "ACH".to_string(),
+        };
+        let event = Events::Settle;
+
+        payment.progress(event).unwrap();
+
+        assert_eq!(
+            payment,
+            Payment::Settled {
+                setteled_at: Zoned::now().date(),
+            }
+        );
+    }
+
+    #[test]
+    fn full_lifecycle() {
+        let mut payment = scheduled();
+        payment
+            .progress(Events::Submitted {
+                rail_used: "ACH".to_string(),
+            })
+            .unwrap();
+        payment.progress(Events::Settle).unwrap();
+
+        assert_eq!(
+            payment,
+            Payment::Settled {
+                setteled_at: Zoned::now().date(),
+            }
+        );
+    }
+}
 
 // ===== PROGRAM 3 — Your own Option and Result =====
 // Build Maybe<T> and Outcome<T, E> from scratch — discover that Rust's two most-used
