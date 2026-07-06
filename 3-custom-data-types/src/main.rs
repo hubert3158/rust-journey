@@ -1,11 +1,10 @@
-#![allow(unused)]
 //! Phase 3 projects — build each from scratch. Features only; figure out the "how" yourself.
 //! Do them in order. Prove each one works with your own test cases before moving on.
 //! Full specs + done-when checklist: ../README.md
 //! The phase's one big idea: make illegal states unrepresentable.
 //!
 
-use jiff::Zoned;
+use jiff::{Zoned, civil::Date};
 
 pub fn main() {
     println!("custom-data-types started");
@@ -116,14 +115,14 @@ pub fn main() {
 #[derive(Debug)]
 enum Payment {
     Scheduled {
-        run_date: String,
+        run_date: Date,
     },
     Submitted {
-        submitted_at: String,
+        submitted_at: Date,
         rail_used: String,
     },
     Settled {
-        setteled_at: String,
+        setteled_at: Date,
     },
     Returned {
         reason_code: String,
@@ -139,25 +138,36 @@ type TransitonError = String;
 impl Payment {
     fn status(&mut self) {
         match self {
-            Payment::Scheduled { run_date } => println!("Scheduled"),
+            Payment::Scheduled { run_date } => println!("Scheduled, Run Date: {}", run_date),
             Payment::Submitted {
                 submitted_at,
                 rail_used,
-            } => println!("Submitted"),
-            Payment::Settled { setteled_at } => println!("Settled"),
+            } => println!(
+                "Submitted , Submitted at:{}, Rail Used:{}",
+                submitted_at, rail_used
+            ),
+            Payment::Settled { setteled_at } => println!("Settled, Settled At>{}", setteled_at),
             Payment::Returned {
                 reason_code,
                 human_message,
-            } => println!("Returned"),
-            Payment::Canceled { cancelled_reason } => todo!(),
+            } => println!(
+                "Returned, Reason Code:{}, Human Message:{}",
+                reason_code, human_message
+            ),
+            Payment::Canceled { cancelled_reason } => {
+                println!("Canceled, Cancelled Reason:{}", cancelled_reason)
+            }
         }
     }
     fn progress(self, event: Events) -> Result<Self, TransitonError> {
         match self {
             Payment::Scheduled { run_date } => match event {
-                Events::Submitted => Result::Ok(Payment::Submitted {
-                    submitted_at: Zoned::now().date().to_string(),
-                    rail_used: String::from("ACH"),
+                Events::Submitted => {
+
+                    Result::Ok(Payment::Submitted {
+                    submitted_at: Zoned::now().date(),
+                    rail_used: String::from("ACH")
+                    },
                 }),
                 Events::Settle => Err(String::from(
                     "You cannot directly settled a scheduled payment bro",
@@ -178,7 +188,7 @@ impl Payment {
                     rail_used,
                 }),
                 Events::Settle => Result::Ok(Payment::Settled {
-                    setteled_at: Zoned::now().date().to_string(),
+                    setteled_at: Zoned::now().date(),
                 }),
                 Events::Return { reason } => Result::Ok(Payment::Returned {
                     reason_code: reason,
@@ -224,7 +234,7 @@ enum Events {
 
 fn payment() {
     let mut x = Payment::Scheduled {
-        run_date: String::from("2026-07-02"),
+        run_date: Zoned::now().date(),
     };
     x.status();
     let y = Events::Submitted;
