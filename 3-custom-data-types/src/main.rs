@@ -124,7 +124,7 @@ enum Payment {
         setteled_at: Date,
     },
     Returned {
-        reason_code: String,
+        reason_code: ReasonCode,
         human_message: String,
     },
     Canceled {
@@ -132,6 +132,31 @@ enum Payment {
     },
 }
 
+#[derive(Debug, PartialEq, Eq, Clone)]
+enum ReasonCode {
+    R01,
+    R08,
+}
+
+impl std::fmt::Display for ReasonCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "({})",
+            match self {
+                ReasonCode::R01 => "Network",
+                ReasonCode::R08 => "AboveLimit",
+            }
+        )
+    }
+}
+
+enum Events {
+    Submitted { rail_used: String },
+    Settle,
+    Return { reason: ReasonCode },
+    Cancel,
+}
 type TransitonError = String;
 
 impl Payment {
@@ -255,13 +280,6 @@ impl Payment {
     }
 }
 
-enum Events {
-    Submitted { rail_used: String },
-    Settle,
-    Return { reason: String },
-    Cancel,
-}
-
 fn payment_demo() {
     //payment state 1
     let mut payment = Payment::Scheduled {
@@ -270,7 +288,7 @@ fn payment_demo() {
 
     //illegal progresson scheduled -> return
     let return_val = payment.progress(Events::Return {
-        reason: "ACH".to_string(),
+        reason: ReasonCode::R01,
     });
 
     if let Err(string) = &return_val {
@@ -300,7 +318,7 @@ fn payment_demo() {
     payment.status();
 
     let return_val = payment.clone().progress(Events::Return {
-        reason: "bank closed".to_string(),
+        reason: ReasonCode::R01,
     });
     match return_val {
         Ok(_) => println!("cloned payment is returned"),
