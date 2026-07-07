@@ -124,7 +124,7 @@ enum Payment {
         setteled_at: Date,
     },
     Returned {
-        reason_code: ReasonCode,
+        reason_code: String,
         human_message: String,
     },
     Canceled {
@@ -132,29 +132,12 @@ enum Payment {
     },
 }
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-enum ReasonCode {
-    R01,
-    R08,
-}
-
-impl std::fmt::Display for ReasonCode {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "({})",
-            match self {
-                ReasonCode::R01 => "Network",
-                ReasonCode::R08 => "AboveLimit",
-            }
-        )
-    }
-}
+const REASON_CODE: [&str; 2] = ["R01", "R08"];
 
 enum Events {
     Submitted { rail_used: String },
     Settle,
-    Return { reason: ReasonCode },
+    Return { reason_code: String },
     Cancel,
 }
 type TransitonError = String;
@@ -204,7 +187,7 @@ impl Payment {
                 Events::Settle => Err(String::from(
                     "You cannot directly settled a scheduled payment bro",
                 )),
-                Events::Return { reason: _ } => Err(String::from(
+                Events::Return { reason_code: _ } => Err(String::from(
                     "You cannot directly settled a scheduled payment bro",
                 )),
                 Events::Cancel => {
@@ -225,13 +208,16 @@ impl Payment {
                     };
                     Ok(())
                 }
-                Events::Return { reason } => {
-                    *self = Payment::Returned {
-                        reason_code: reason,
-                        human_message: "Payment returned".to_string(),
-                    };
-                    Ok(())
-                }
+                Events::Return { reason_code } => match reason_code.as_str() {
+                    code @ ("R01" | "R08") => {
+                        *self = Payment::Returned {
+                            reason_code: code.to_string(),
+                            human_message: "Payment returned".to_string(),
+                        };
+                        Ok(())
+                    }
+                    other => Err(format!("unknown return reason code: {other}")),
+                },
                 Events::Cancel => {
                     *self = Payment::Canceled {
                         cancelled_reason: "successfully Canceled".to_string(),
@@ -244,7 +230,9 @@ impl Payment {
                     Err("Not allowed to chage from settled to submitted".to_string())
                 }
                 Events::Settle => Ok(()),
-                Events::Return { reason } => {
+                Events::Return {
+                    reason_code: reason,
+                } => {
                     *self = Payment::Returned {
                         reason_code: reason,
                         human_message: " Late return, Money refunded ".to_string(),
@@ -261,7 +249,7 @@ impl Payment {
                     Err("Cant submite returned payment".to_string())
                 }
                 Events::Settle => Err("Cant settle returned payment".to_string()),
-                Events::Return { reason: _ } => Ok(()),
+                Events::Return { reason_code: _ } => Ok(()),
                 Events::Cancel => Err("Sorry cannot cancel a returned payment".to_string()),
             },
             Payment::Canceled {
@@ -271,7 +259,7 @@ impl Payment {
                     Err("sorry not allowed to change from canceled to returned".to_string())
                 }
                 Events::Settle => Err("sorry cancelled payment cannot be settled".to_string()),
-                Events::Return { reason: _ } => {
+                Events::Return { reason_code: _ } => {
                     Err("Canceled payments cant be returned".to_string())
                 }
                 Events::Cancel => Ok(()),
@@ -288,7 +276,7 @@ fn payment_demo() {
 
     //illegal progresson scheduled -> return
     let return_val = payment.progress(Events::Return {
-        reason: ReasonCode::R01,
+        reason_code: REASON_CODE.first().unwrap().to_string(),
     });
 
     if let Err(string) = &return_val {
@@ -318,11 +306,11 @@ fn payment_demo() {
     payment.status();
 
     let return_val = payment.clone().progress(Events::Return {
-        reason: ReasonCode::R01,
+        reason_code: "R03".to_string(),
     });
     match return_val {
         Ok(_) => println!("cloned payment is returned"),
-        Err(e) => eprintln!("issue returning{}", e),
+        Err(e) => eprintln!("issue returning {}, ", e),
     }
     let return_val = payment.progress(Events::Settle);
     match return_val {
