@@ -46,9 +46,18 @@ on traits. *(In Phase 12 you'll write `#[derive(ToJson)]` so structs get this fo
   (hint: the fix is a `where Self: Sized` escape hatch or redesign).
 - Print `std::mem::size_of_val` of a `&dyn Stage` reference vs a plain `&ConcreteStage`.
   Explain the extra pointer.
+- Give one concrete stage a second trait with a method named `run` too (e.g. a `Describe`
+  trait). Now a plain `.run()` call is ambiguous — resolve it with **fully qualified
+  syntax** (`<T as Stage>::run(...)`). One comment: when does this come up in real code
+  (hint: `Iterator::next` vs your own `next`).
+- Add a **supertrait**: `trait LoggedStage: Stage` with a default method that calls
+  `self.run(...)` and prints timing. Then take a `&dyn LoggedStage` and pass it where a
+  `&dyn Stage` is wanted — **trait upcasting** (stable since Rust 1.86). Note what the
+  coercion does to the vtable pointer.
 
 **What you'll learn:** static vs dynamic dispatch, monomorphization vs vtables, object
-safety rules, `Box<dyn Trait>`, fat pointers, trait objects' real trade-offs.
+safety rules, `Box<dyn Trait>`, fat pointers, fully qualified syntax, supertraits,
+trait upcasting, trait objects' real trade-offs.
 
 ---
 
@@ -94,8 +103,47 @@ operator overloading decisions as API design, newtypes + std traits working toge
 
 ---
 
+## Program 5 — Odds-and-ends drill (~1 hour, one playground file)
+
+**Goal:** The Book's "Advanced Types" leftovers — small, but a master knows them cold.
+
+**Requirements:**
+- **Type alias:** your `PriorityQueue` results probably repeat a long `Result<..., ...>` —
+  define `type QueueResult<T> = ...` and use it. Note: alias ≠ newtype (no new type safety).
+- **DSTs & `?Sized`:** write `fn describe<T: ?Sized + std::fmt::Debug>(t: &T)` and call it
+  with a `str` and a `[i64]`. Then remove `?Sized` and read the error. Comment: why do
+  `str`/`[T]`/`dyn Trait` only live behind pointers, and what does `Sized` (implicit on
+  every generic) actually assert?
+- **Default generic type parameters:** you already used one — `std::ops::Add` is
+  `trait Add<Rhs = Self>`. Prove you can override the default: impl `Add<Cents> for
+  Dollars` (mixed-type addition) on your Phase 3 money types. One comment: why does the
+  default make the common case (`Dollars + Dollars`) require zero annotations?
+- **Associated consts:** give your units trait (or a new `Bounded` trait) a
+  `const MIN: Self; const MAX: Self;` — impls provide values, generic code reads
+  `T::MAX`. Note how this differs from a method returning the value.
+- **`const fn`:** make one of your newtype constructors `const fn` and use it to build a
+  `const` value. Try to put something non-const inside and read the error — that boundary
+  is the whole concept.
+- **`Any` + downcasting (bonus):** store `Vec<Box<dyn Any>>`, put three different types
+  in, get one back out with `.downcast_ref::<T>()`. One comment: why is this almost
+  always the wrong design in Rust (what did you lose that enums/generics keep?) — and
+  name-check where it's legitimate (plugin registries, `anyhow`'s internals).
+- **GATs awareness (stretch, read-only):** try to sketch a "lending iterator" whose `next`
+  returns a reference into itself — see why the plain `Iterator` trait can't express it,
+  and read how a generic associated type (`type Item<'a>`) fixes it. No implementation
+  required; a 5-line summary comment is the deliverable. While you're reading, learn to
+  *recognize* two unstable features blog posts mention: specialization and TAIT — one
+  sentence each, no code.
+
+**What you'll learn:** type aliases, dynamically sized types, `?Sized`, the implicit
+`Sized` bound, default generic type params, associated consts, `const fn`, `Any`'s
+trade-off, GATs as a signpost for later.
+
+---
+
 ## Done when
 
-- [ ] All four programs have passing tests
+- [ ] All programs have passing tests
 - [ ] You can explain: monomorphization vs vtable, orphan rule, object safety — out loud, no notes
 - [ ] You know when to pick `impl Trait` param vs generic vs `Box<dyn Trait>`
+- [ ] You can disambiguate two same-named trait methods without looking up the syntax

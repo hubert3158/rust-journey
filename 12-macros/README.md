@@ -77,8 +77,20 @@ testing, respect for what serde does.
 
 ---
 
+## Closing the loop — meet the real serde (1 evening, no code)
+
+You've now built serde's architecture yourself: trait (Phase 4) + derive (here) + literal
+macro (here). Cash it in: skim serde's docs and map every feature to what you built —
+`#[serde(rename)]` ↔ your `to_json(rename)`, derive bounds on generics ↔ what you added
+by hand, `Serialize` ↔ `ToJson`. Then use REAL `serde_json` once: derive
+`Serialize`/`Deserialize` on a struct, round-trip it. From now on you use serde like
+everyone else — the difference is you know exactly what it generates.
+
+---
+
 ## Done when
 
 - [ ] `json!` handles anything you throw at it, nested and trailing-comma'd
 - [ ] You can read `syn`/`quote` code without fear
 - [ ] `#[derive(ToJson)]` works on a generic struct with a renamed field
+- [ ] serde's docs read like a description of code you've already written

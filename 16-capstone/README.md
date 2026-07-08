@@ -11,6 +11,10 @@ Whichever you pick, the same bar applies:
 - property tests or a fuzz target on the parsing surface (Phase 14)
 - a benchmark with recorded numbers for the hot path (Phase 14)
 - at least one deliberately designed API following your audit checklist (Phase 15)
+- **real-ecosystem surface**: CLI args via `clap` (derive API — you'll recognize your
+  Phase 12 skills in what it generates), config/persistence via real `serde`, and
+  `tracing` spans on the hot path instead of `println!` debugging. You built the
+  educational clones; a master also ships with the tools everyone shares.
 
 ---
 

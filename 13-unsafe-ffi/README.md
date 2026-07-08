@@ -34,6 +34,12 @@ You'll check items off as you personally trigger each one under Miri.
 **What you'll learn:** `std::alloc`, `NonNull`, `ptr::read/write/drop_in_place`, growth
 strategy, `Drop` correctness, `Deref` to slice, Miri as a lie detector.
 
+**Side quest (30 min):** `UnsafeCell<T>` — the ONE primitive under `Cell`, `RefCell`,
+`Mutex`, and every atomic. It's the only legal way to mutate through `&T` (anything else
+is instant UB). Build a 20-line `MyCell<T>` with `get`/`set` on top of it, run it under
+Miri, and write the comment: what does `UnsafeCell` tell the compiler to stop assuming?
+(This retroactively explains all of Phase 9.)
+
 ---
 
 ## Program 2 — Doubly linked list
@@ -54,6 +60,20 @@ strategy, `Drop` correctness, `Deref` to slice, Miri as a lie detector.
 **What you'll learn:** aliasing rules in practice, `NonNull`, invariant thinking, why Rust
 made this hard on purpose, `PhantomData` (the list needs it — discover why).
 
+**Side quest (1 hour): variance.** The `PhantomData` you just added raises the question
+the Rustonomicon's variance chapter answers. Read it, then prove each rule in a scratch
+file with prediction comments:
+- `&'long T` coerces where `&'short T` is wanted (covariance) — show it compiling.
+- `&mut T` does NOT coerce in `T` (invariance) — write the classic exploit-attempt
+  (smuggle a short-lived `&str` into a `&mut &'static str`) and keep the compile error
+  as the explanation.
+- `fn(T)` is *contra*variant in its argument — one example, one sentence on why
+  callbacks flip the direction.
+- Answer in a comment: which variance did your `PhantomData<T>` choice give the list,
+  and what could go wrong with the other choice? Plus one paragraph on **dropck** —
+  why the compiler cares whether your list's `Drop` can observe dangling `T`s
+  (`#[may_dangle]` exists; name-recognition is enough).
+
 ---
 
 ## Program 3 — Wrap a C library
@@ -72,9 +92,14 @@ made this hard on purpose, `PhantomData` (the list needs it — discover why).
   can't cause UB no matter what they call in what order. Write the test that tries.
 - Round-trip proof: compress-then-decompress bytes match (zlib), or create-insert-query
   works (sqlite).
+- Linking is part of the lesson: make it link explicitly (a `build.rs` with
+  `println!("cargo:rustc-link-lib=z")`, or `#[link(name = "...")]`, or the `pkg-config`
+  crate). One comment: what `-sys` crates are and why the ecosystem splits `foo-sys`
+  (raw bindings + linking) from `foo` (safe wrapper) — you just built both halves.
 
-**What you'll learn:** `extern "C"`, `#[repr(C)]`, linking, `CStr`/`CString`, ownership
-across the language boundary, bindgen, RAII wrappers, sound API design over unsafe cores.
+**What you'll learn:** `extern "C"`, `#[repr(C)]`, linking + `build.rs`, `CStr`/`CString`,
+ownership across the language boundary, bindgen, `-sys` crate convention, RAII wrappers,
+sound API design over unsafe cores.
 
 ---
 

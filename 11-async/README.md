@@ -48,6 +48,10 @@ the compiler makes you touch it and read just enough to know why.)*
 - Summary table at the end sorted by latency; non-zero exit if any URL failed.
 - One deliberate experiment: drop a future mid-flight (via `select!` racing a short
   timeout) and log that its post-await code never ran — cancellation made visible.
+- Expose results as a **`Stream`** (async iterator): wrap the results channel with
+  `tokio_stream::wrappers::ReceiverStream` (or build one with `stream::unfold`) and
+  consume it with `while let Some(r) = stream.next().await`. One comment: `Stream` is to
+  `Iterator` what `Future` is to a plain value — and why there's no `for await` (yet).
 
 **What you'll learn:** `tokio::spawn`/`JoinSet`, Semaphore-bounded concurrency, timeouts,
 `select!`, cancellation semantics, async closures/bounds, `Send + 'static` on tasks.
@@ -67,6 +71,11 @@ the compiler makes you touch it and read just enough to know why.)*
   message, connections close cleanly, no task left dangling.
 - Slow-client policy: broadcast lag (`RecvError::Lagged`) must be handled — decide drop vs
   disconnect and comment the choice.
+- The server keeps shared state (nickname list). Choose the mutex deliberately:
+  `std::sync::Mutex` is CORRECT for short, non-`.await`-holding critical sections even in
+  async code; `tokio::sync::Mutex` only when a lock must be held across an `.await`.
+  Write the rule as a comment where you lock — this is the most-repeated async code-review
+  note in existence.
 
 **Requirements — client:**
 - Ratatui TUI: message pane + input line (this is what `TUI-app/` was waiting for).

@@ -46,6 +46,10 @@ channel + shared-receiver pattern, `Arc<Mutex<Receiver>>`, graceful shutdown, sc
   helping and why (IO-bound vs CPU-bound: which is this?).
 - Poison one file (no read permission): the pool must report the error and keep going —
   one bad file can't kill the run.
+- Results channel experiment: swap the unbounded `channel()` for `sync_channel(16)` and
+  make the consumer artificially slow — watch searchers block when the buffer fills.
+  One comment: **backpressure** — what unbounded channels do to memory when producers
+  outrun consumers (Phase 11 meets the same idea as broadcast lag).
 
 **What you'll learn:** work distribution, streaming results via channels, ownership moving
 into jobs, measuring instead of assuming, error isolation across threads.
@@ -66,10 +70,15 @@ into jobs, measuring instead of assuming, error isolation across threads.
   (contention, cache-line bouncing).
 - Add a `AtomicBool` stop-flag variant: threads spin until a coordinator flips it —
   your first acquire/release pairing. One comment: what could go wrong with Relaxed here.
+- The spin variant burns a core doing nothing — replace it with **`Condvar`**: workers
+  `wait()` on a `Mutex`+`Condvar` pair, the coordinator `notify_all()`s. Watch CPU usage
+  of both versions in `top`. That difference is why wait/notify exists (and it's the same
+  parked-thread trick your Phase 11 toy executor will pull with `Waker`).
 - Sanity checks: every variant must total exactly 8,000,000.
 
 **What you'll learn:** atomics, `Ordering` with working intuition (Relaxed vs
-Acquire/Release vs SeqCst), contention costs, why sharing less beats syncing better.
+Acquire/Release vs SeqCst), `Condvar` wait/notify vs spinning, contention costs, why
+sharing less beats syncing better.
 
 ---
 

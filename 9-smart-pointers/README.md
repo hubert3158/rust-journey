@@ -20,6 +20,9 @@ borrow-checker frustration. The second is how Rust code rots.
   of any node by walking UP through parents, pretty-print whole tree with indentation.
 - Parent links must be `Weak` — first try `Rc` for parents, observe the leak (see below),
   then fix. Keep the broken version in a test comment as a war story.
+- While the leak is live, write the 3-line comment that settles a common confusion:
+  leaking is **safe** in Rust (`mem::forget` and `Box::leak` are safe functions; safety =
+  no UB, not no leaks) — which is exactly why Rc cycles compile fine and are YOUR problem.
 - Leak proof: a test that builds a tree, checks `Rc::strong_count`/`weak_count` at key
   points, drops the root, and asserts counts collapse to what you predicted. Predictions
   in comments BEFORE running.
@@ -82,6 +85,9 @@ textbook structures don't translate to safe Rust directly, honest cost accountin
 - Add one mutable-at-runtime field the right way (e.g. `LazyLock<RwLock<...>>`) and one
   set-exactly-once value with `OnceLock`.
 - Comment: why `static mut` is the wrong answer (you'll formally meet it in Phase 13).
+- Bonus: the third way to get `&'static Config` — `Box::leak(Box::new(config))`. Try it,
+  note when it's legitimate (config lives for the whole program anyway) vs when `LazyLock`
+  is simply better.
 
 **What you'll learn:** `LazyLock`, `OnceLock`, global state without `unsafe`, lazy init,
 a first taste of `RwLock` before Phase 10.

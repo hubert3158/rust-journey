@@ -56,6 +56,9 @@ This phase sets the foundation. Rust's syntax looks familiar, but its _model_ is
 **Milestone:**  
 Write a simple CLI calculator or guessing game.
 
+**Gap check (added after Book audit — do the 30-min drill in the folder README):**
+`const` vs `static`, integer overflow semantics (debug panics, release wraps; `checked_`/`wrapping_`/`saturating_` families), `as` cast truncation footguns, `loop` with a `break` value.
+
 ---
 
 ## 🧪 Phase 2: Ownership, Borrowing & Lifetimes — _The Rust Mindshift_ ✅
@@ -77,6 +80,9 @@ Ownership is Rust’s core innovation. Mastering this means unlocking safe syste
 **Milestone:**  
 Write a file parser that borrows from a buffer.
 
+**Gap check (added after Book audit — drill in the folder README):**
+`&'static` and string literals, `T: 'a` / `T: 'static` bounds on generics, slices as fat pointers (prove with `size_of`), NLL/reborrowing intuition (why sequential `&mut`s compile).
+
 ---
 
 ## 🧱 Phase 3: Custom Data Types — _Modeling with Structs & Enums_ 🚧
@@ -86,10 +92,11 @@ Rust isn't OOP. You model real-world logic using structs, enums, and pattern mat
 
 **What you’ll learn:**
 
-- `struct`, tuple struct, newtype
+- `struct`, tuple struct, newtype; methods & associated functions; field init shorthand, struct update syntax (`..`)
 - `enum`, nested types
-- Pattern matching: `match`, `if let`, `while let`, `let else`
-- `Option`, `Result`
+- Pattern matching: `match`, `if let`, `while let`, `let else`, `matches!`
+- Slice patterns (`[first, .., last]`) and match ergonomics (binding modes — why matching `&Option<String>` works without `ref`)
+- `Option`, `Result`; `FromStr` so your types plug into `.parse()`
 
 **Teaches you:**
 
@@ -125,6 +132,11 @@ This is Rust's answer to inheritance and interfaces — but with a twist: you mu
 - Coherence and the orphan rule — why you can't impl foreign traits on foreign types
 - `impl Trait` in argument and return position
 - Const generics basics (`struct Matrix<const N: usize>`)
+- Fully qualified syntax (`<T as Trait>::method`) for disambiguating same-named methods
+- Type aliases (`type Result<T> = ...`); DSTs (`str`, `[T]`, `dyn Trait`) and `?Sized` bounds
+- Trait upcasting (`&dyn Sub → &dyn Super`); awareness of GATs (why a *lending* iterator can't be a normal `Iterator`)
+- Associated consts; default generic type parameters (`trait Add<Rhs = Self>` — you've been using one); `const fn`
+- `Any` + downcasting (know it, reach for it rarely); name-recognition for unstable features you'll see in blog posts: specialization, TAIT
 
 **Programs to build:**
 
@@ -146,9 +158,10 @@ Closures and iterators are the most-used abstractions in real Rust code — more
 - `Fn` vs `FnMut` vs `FnOnce` — what each means and when the compiler picks which
 - Taking closures as parameters (generic bounds) and returning them (`impl Fn`, `Box<dyn Fn>`)
 - Function pointers (`fn`) vs closures
+- **Higher-ranked trait bounds** (`for<'a> Fn(&'a str) -> &'a str`) — the bound behind every stored closure that borrows its argument; you write one implicitly the moment you box a `Fn(&Event)`
 - Implementing `Iterator` (associated `Item`, `next()`) and `IntoIterator`
 - Why adapters are lazy; `iter()` vs `iter_mut()` vs `into_iter()`
-- The combinator vocabulary: `map`, `filter`, `filter_map`, `fold`, `zip`, `chain`, `take_while`, `flat_map`, `collect` into different containers
+- The combinator vocabulary: `map`, `filter`, `filter_map`, `fold`, `zip`, `chain`, `take_while`, `flat_map`, `peekable`, `scan`, `by_ref`, `collect` into different containers
 - Writing extension traits (`trait IteratorExt: Iterator`)
 
 **Programs to build:**
@@ -174,7 +187,9 @@ Rust has no exceptions. The `?` operator, the `Error` trait, and `From`-powered 
 - `Box<dyn Error>` — when it's enough
 - `thiserror` for libraries vs `anyhow` (with `.context()`) for applications — and why
 - `Option`/`Result` combinators: `map`, `and_then`, `ok_or`, `unwrap_or_else`, `transpose`
-- Process exit codes; reporting errors to users vs logs
+- Iterators of `Result`s: `collect::<Result<Vec<_>, E>>()` — fail-fast collection
+- Process exit codes; stdout vs stderr discipline (`eprintln!` so piping stays clean)
+- Panic mechanics: unwind vs `panic = "abort"`; the never type `!` (`unreachable!`, `todo!`, why `process::exit` type-checks anywhere)
 
 **Programs to build:**
 
@@ -198,7 +213,8 @@ Everything so far fits in one `main.rs`. Real projects don't. Module visibility,
 - Workspaces: shared `Cargo.lock`, path dependencies between member crates
 - Cargo features (optional deps, conditional compilation with `#[cfg(feature = "...")]`)
 - rustdoc: `///`, `//!`, intra-doc links, **doctests** (examples that run as tests)
-- semver, `cargo publish --dry-run`, `cargo tree`, `cargo add`
+- semver, `cargo publish --dry-run`, `cargo tree`, `cargo add`, `cargo install`
+- Editions (2015 → 2024): what they are, why they're per-crate opt-in, `cargo fix --edition`
 - Toolchain hygiene: `clippy` (fix every lint once, learn why), `rustfmt`, `cargo audit`
 
 **Programs to build:**
@@ -224,6 +240,8 @@ Fluency here is what makes Rust feel fast to write instead of painful. Strings e
 - UTF-8 reality: `chars()` vs `bytes()` vs grapheme clusters; why `s[0]` doesn't compile
 - Sorting: `sort_by_key`, `sort_unstable`, `binary_search`; why floats aren't `Ord` (`total_cmp`)
 - `std::mem::take` / `swap` / `replace` — moving out from behind `&mut`
+- **`std::io` for real**: the `Read`/`Write` traits, `BufReader`/`BufWriter` (and what unbuffered IO costs), locking stdout, writing functions generic over `impl Write` so they're testable
+- Slice tools: `windows`, `chunks`, `split_at`, slice patterns in real parsing
 
 **Programs to build:**
 
@@ -249,6 +267,7 @@ Ownership says: one owner, mutation XOR sharing. Smart pointers are the escape h
 - `Deref`/`DerefMut` coercion — why `&Box<String>` works where `&str` is wanted
 - `Drop`: RAII, drop order, why you can't call `.drop()` directly
 - `Cow<str>` revisited: clone-on-write APIs
+- `mem::forget` and `Box::leak` — why leaking is *safe* (and why Rc cycles therefore can't be compile errors)
 - Stack vs heap, `size_of`, what `Rc<RefCell<T>>` actually costs
 
 **Programs to build:**
@@ -271,7 +290,7 @@ Rust's boldest claim: data races are compile errors. That guarantee flows from t
 - **`Send` and `Sync`** — what they mean, which types lack them (`Rc`, `RefCell`) and *why*
 - `std::thread::scope` — borrowing from the stack across threads (kills most `Arc` boilerplate)
 - `Arc<Mutex<T>>`, lock poisoning, `RwLock`, contention and deadlock (make one on purpose)
-- Channels: `mpsc`, ownership transfer through channels, worker patterns
+- Channels: `mpsc`, bounded `sync_channel` and backpressure, ownership transfer through channels, worker patterns
 - Atomics: `AtomicU64`/`AtomicBool`, `Ordering` (`Relaxed` vs `SeqCst` — working intuition)
 - `Condvar` for wait/notify
 - `rayon`: `par_iter`, when data parallelism beats hand-rolled threads
@@ -300,6 +319,7 @@ Async Rust is threads' complement: massive concurrency for IO-bound work. It's a
 - Async channels: `mpsc`, `oneshot`, `broadcast`, `watch` — each has a distinct job
 - `Semaphore` for bounding concurrency; `spawn_blocking` for CPU work
 - Streams (`futures::Stream`) as async iterators
+- Shared state in async: `std::sync::Mutex` vs `tokio::sync::Mutex` — the hold-across-`.await` rule
 - `Pin`/`Unpin` — working understanding of why self-referential futures need it
 - Async traits (native since Rust 1.75), when you still need `Box<dyn Future>`
 
@@ -343,10 +363,13 @@ Macros generate code at compile time — Rust's answer to boilerplate without ru
 - Raw pointers (`*const`/`*mut`), aliasing rules, why `&mut` exclusivity still binds you
 - A working catalog of UB: dangling pointers, invalid values, data races, aliasing violations
 - `MaybeUninit`, `NonNull`, `std::ptr` routines; why `transmute` is a last resort
+- `UnsafeCell` — the single primitive under `Cell`/`RefCell`/`Mutex`; the only legal `&T` → mutation door
+- **Variance** — why `&'long T` passes where `&'short T` is wanted, why `&mut T` refuses; `PhantomData` as a variance/drop marker; dropck at name-recognition level
 - **Miri** (`cargo +nightly miri test`) — run it on everything in this phase
 - Unsafe traits: what implementing `Send`/`Sync` manually asserts
 - FFI: `extern "C"`, `#[repr(C)]`, `CString`/`CStr`, who owns what across the boundary
 - `bindgen` for consuming C headers; `cbindgen` for exposing Rust to C
+- Build scripts (`build.rs`) and linking: `#[link]`, `pkg-config`, when a `-sys` crate exists
 
 **Programs to build:**
 
@@ -429,6 +452,60 @@ Depth now beats breadth. One substantial project that forces phases 4–15 to wo
 | 🕹️ Game Dev | Bevy, ECS | Bevy book; ECS is a genuinely different architecture |
 | 🌍 WASM | Leptos, Yew | wasm-bindgen first, then a framework |
 | 🧠 Tooling | Compilers, LSPs, proc macros | write a formatter or linter for a toy language |
+
+---
+
+## 📚 Doc-reading fluency — cross-phase habit
+
+Goal: open any docs.rs page and read it like prose. Standing rule from Phase 4 on:
+**every std/crate item you use, read its full doc page once** — not just the method you came for.
+
+Concrete reps, tied to phases:
+
+- **Signature decoding** (after Phases 4–5) — translate each into one plain-English sentence using only the docs:
+  - `fn sort_by_key<K, F>(&mut self, f: F) where F: FnMut(&T) -> K, K: Ord`
+  - `fn collect<B: FromIterator<Self::Item>>(self) -> B` *(why can one method return Vec, String, HashMap, AND `Result<Vec<_>, E>`? Follow the `FromIterator` link — the impls list IS the answer)*
+  - `fn entry(&mut self, key: K) -> Entry<'_, K, V>` *(what is that `'_`?)*
+  - `impl<A, F: Fn(A) -> B> ...` with a `for<'a>` in it — after Phase 5's HRTB exercise these stop looking like noise
+  Decode these and nothing in std's docs can scare you.
+- **Page anatomy** (once, ~20 min on `Vec`'s page): find the four zones — inherent methods, trait implementations, blanket implementations (`From`, `IntoIterator`), and **Auto Trait Implementations** (`Send`/`Sync` — nobody wrote those; Phase 10 explains who did). Then answer: why does `Vec` "have" `windows()` when it's not in Vec's method list? (Hint: the `Deref<Target = [T]>` impl — methods flow through deref.)
+- **Search & navigation tricks**: rustdoc search takes type signatures (`vec, usize -> bool`); primitives have their own pages (`str` ≠ `String`); syntax itself is documented (`std::keyword::dyn`, `std::keyword::where`); `[src]` button — read the source of one small std function per phase (start with `Option::map`: it's 3 lines and demystifies the whole library).
+- **docs.rs specifics** (after Phase 7): feature-gated APIs are labeled with their feature; the crate's feature list is a page; version selector matters when a tutorial disagrees with reality. Your own `cargo doc` output follows identical anatomy — you learned to write it in Phase 7, so you can read anyone's.
+- **Long-form crate docs** (after Phase 11): read tokio's module-level docs (`tokio::sync` especially — the "which channel do I want" guide) top to bottom. Best-in-class example of the genre.
+
+---
+
+## 📖 Rust Book coverage map
+
+Every chapter of [the Book](https://doc.rust-lang.org/book/) mapped to where this roadmap covers it — nothing skipped:
+
+| Book chapter | Covered by |
+|---|---|
+| 1 Getting Started, 2 Guessing Game | Phase 1 |
+| 3 Common Concepts | Phase 1 (+ gap check: const/static, overflow, `as`) |
+| 4 Ownership, References, Slices | Phase 2 (+ gap check: `'static`, `T: 'a`, fat pointers) |
+| 5 Structs & Methods | Phase 3 |
+| 6 Enums & Pattern Matching | Phase 3 |
+| 7 Packages, Crates, Modules | Phase 7 |
+| 8 Collections (Vec, String, HashMap) | Phase 8 |
+| 9 Error Handling | Phase 6 |
+| 10 Generics, Traits, Lifetimes | Phases 2 & 4 |
+| 11 Automated Tests | Phase 3 onward (habit); organization in Phases 7 & 14 |
+| 12 I/O Project (minigrep) | Phase 6 (CLI+errors+env+stderr) & Phase 10 (parallel grep) |
+| 13 Closures & Iterators | Phase 5 |
+| 14 Cargo & Crates.io | Phase 7 (+ release profiles in Phase 14) |
+| 15 Smart Pointers | Phase 9 |
+| 16 Fearless Concurrency | Phase 10 |
+| 17 Async | Phase 11 |
+| 18 OOP Features / Trait Objects / State Pattern | Phase 4 (dyn) & Phase 15 (state pattern → typestate) |
+| 19 Patterns & Matching | Phase 3 (full pattern syntax incl. slice patterns, ergonomics) |
+| 20 Advanced Features (unsafe, advanced traits/types/fns, macros) | Phases 13, 4, 5, 12 |
+| 21 Final Project (multithreaded web server) | Phase 10 thread pool + Phase 11 chat server |
+| Appendix C Derivable Traits | Phase 4 |
+
+**Beyond the Book** (the Book stops where mastery starts): HRTB (5), GATs awareness (4), `Send`/`Sync` internals (10), `Pin`/`Waker`/executors (11), proc macros (12), Miri/UB catalog/variance/FFI (13), proptest/fuzzing/profiling (14), typestate/RAII/API design (15).
+
+**Ecosystem staples** — you build the educational clone first, then adopt the real crate: serde (Phases 4+12 → capstone), clap (capstone), thiserror/anyhow (6), tokio (11), rayon (10), criterion/proptest/insta (14), tracing (14).
 
 ---
 

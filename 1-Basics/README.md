@@ -132,3 +132,25 @@ Final Balance: 900
 **Concepts practiced:** mutable variables, `match`, control flow, vectors/tuples for logging, functions, error checks
 
 ---
+
+## 🔍 Gap-Check Drill (added after Rust Book audit — ~30 min, playground file)
+
+Phase 1 is done, but four Book-chapter-3 details never came up. Write one small
+`gaps.rs` in `playground/` that demonstrates each, with a comment predicting the
+behavior BEFORE you run it:
+
+- [ ] **`const` vs `static` vs `let`** — declare one of each; try to make each mutable;
+      note where the value lives and when it's computed. Then read what `static mut`
+      would require (don't use it — Phase 13 explains why).
+- [ ] **Integer overflow semantics** — `let x: u8 = 255; x + 1`:
+      run in debug (panics) and `--release` (wraps). Then do the same with
+      `checked_add`, `wrapping_add`, `saturating_add`, `overflowing_add` — one line each
+      on when you'd pick which. (Your Phase 3 Money overflow policy builds on this.)
+- [ ] **`as` casts** — predict then print: `300_i32 as u8`, `-1_i32 as u32`,
+      `3.9_f64 as i32`, `u64::MAX as f64 as u64`. Rule of thumb to write down:
+      `as` never panics, it truncates/saturates silently — prefer `From`/`TryFrom`
+      (formalized in Phase 4).
+- [ ] **`loop` as an expression** — `let x = loop { break 42; };` — and a labeled
+      break out of nested loops (`'outer: loop { ... break 'outer; }`).
+
+Done when all four run and every prediction comment says whether you were right.

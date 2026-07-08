@@ -39,6 +39,14 @@ file walking, tokenization, ranking.
 - Parse lines like `2026-07-01T14:32:11 ERROR db timeout after 3021ms` (make your own
   sample file generator — a fn that writes ~10k plausible lines; no `rand` needed, a simple
   counter-based pseudo-pattern is fine).
+- **This is the `std::io` program.** Read through `BufReader::lines()`; write the sample
+  file through a `BufWriter` (then once without it — time both, feel what unbuffered
+  syscalls cost). The summary printer must be
+  `fn write_summary(w: &mut impl Write, ...) -> io::Result<()>` — tested against a
+  `Vec<u8>` in unit tests, handed `io::stdout().lock()` in main. That one signature is
+  the `Read`/`Write`-trait lesson.
+- Parse each line with a **slice pattern**: split on whitespace, then
+  `match parts[..] { [ts, level, rest @ ..] => ..., _ => bad_line }`.
 - Bucket into a `BTreeMap` keyed by minute; each bucket counts lines per level
   (INFO/WARN/ERROR).
 - Answer: "errors between 14:00 and 15:00" using a RANGE query on the map — no full scan.
@@ -47,7 +55,7 @@ file walking, tokenization, ranking.
 - Output a per-hour summary table, sorted naturally by the map's ordering.
 
 **What you'll learn:** `BTreeMap` + `range()`, `BinaryHeap` and `Reverse`, streaming top-N,
-simple parsing without regex, when sorted beats hashed.
+`std::io` traits + buffering for real, slice patterns in parsing, when sorted beats hashed.
 
 ---
 
@@ -60,6 +68,8 @@ simple parsing without regex, when sorted beats hashed.
 - Build word-pair frequencies: for each word, which words follow it and how often —
   built ENTIRELY with `entry().or_insert_with(...)` / `or_default()`. No `contains_key`
   followed by `insert` anywhere (that pattern is the anti-lesson).
+- Produce the word pairs with `slice::windows(2)` — and note it's your Phase 5 `Pairs`
+  adapter, provided by std for slices (also meet `chunks` while you're there).
 - Generate N sentences: start from a capitalized word, repeatedly pick the most frequent
   follower (deterministic is fine), stop at a period or 25 words.
 - Also report: 10 most common words, count of distinct words, the word with most distinct

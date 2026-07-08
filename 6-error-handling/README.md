@@ -24,10 +24,21 @@ or a test context. Every panic you write is now a decision, not a habit.
 - Write `From<std::io::Error>` so `?` lifts IO errors into your enum automatically.
 - `main` returns `Result<(), YourError>`; a bad file exits non-zero with a clean one-line
   message — no `RUST_BACKTRACE`, no panic output, ever.
+- **stderr discipline:** errors and progress go to stderr (`eprintln!`), JSON to stdout —
+  `converter data.csv > out.json` must produce a clean file even when rows warn.
+- Row parsing uses the fail-fast collect idiom at least once:
+  `rows.map(parse_row).collect::<Result<Vec<_>, _>>()` — one comment on how `collect`
+  can target `Result<Vec<T>, E>` at all (it's a `FromIterator` impl, not magic).
+- One arm somewhere ends in `unreachable!()` or `todo!()` during development — before
+  finishing, note in a comment why these type-check in any position (the never type `!`).
 - Tests for each error variant using small fixture files (put them in `files/`).
+- Once, deliberately: build with `panic = "abort"` in the profile and observe what changes
+  (no unwinding, no `catch_unwind`, smaller binary). Revert; one comment on when servers
+  choose abort.
 
 **What you'll learn:** designing error enums, `Display` + `Error` impls, how `From` powers
-`?` (the MiniLedger trick, now yours), error data as part of the type, exit codes.
+`?` (the MiniLedger trick, now yours), error data as part of the type, exit codes,
+stdout-vs-stderr, collecting `Result`s, the never type, unwind vs abort.
 
 ---
 

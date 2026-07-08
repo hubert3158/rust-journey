@@ -74,6 +74,9 @@ dependencies, feature hygiene (additive-only rule).
   your poor man's CI. It must exit non-zero if anything fails.
 - Skim `cargo tree` output for the workspace; find one transitive dependency you didn't
   know you had.
+- Five-minute read, not a task: what Rust **editions** are (2015 → 2024), why they're
+  per-crate opt-in (your 2024 crate can depend on a 2015 crate), and what
+  `cargo fix --edition` does. Check which edition your workspace declares.
 
 **What you'll learn:** clippy as a tutor, rustfmt, cargo-audit, dependency awareness,
 the check-script habit that becomes CI later.

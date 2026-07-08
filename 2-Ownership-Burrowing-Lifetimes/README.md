@@ -166,6 +166,29 @@ design structs with lifetimes, return references from collections, and handle bo
 
 ---
 
+## 🔍 Gap-Check Drill (added after Rust Book audit — ~45 min, playground file)
+
+Phase 2 is done, but four lifetime/borrow details deserve explicit reps. One `gaps.rs`,
+prediction comments before running, same rules as Phase 1's drill:
+
+- [ ] **`&'static`** — why does `let s: &'static str = "hello";` work? Where does the
+      data live? Write a function returning `&'static str` legitimately (no leaks).
+- [ ] **`T: 'a` and `T: 'static` bounds on generics** — write
+      `fn hold<T: 'static>(t: T)` and call it with: an owned `String` (works),
+      a `&String` to a local (fails). Comment: `T: 'static` means "no borrows of
+      shorter-lived data inside T" — NOT "lives forever". This bound reappears in
+      Phases 10 & 11 constantly; nail the reading now.
+- [ ] **Slices are fat pointers** — print `size_of::<&u8>()`, `size_of::<&[u8]>()`,
+      `size_of::<&str>()`. Explain the extra 8 bytes. (Phase 4's `&dyn Trait` is the
+      same trick with a vtable instead of a length.)
+- [ ] **NLL / reborrowing** — write code that takes two `&mut` to the same value
+      *sequentially* (compiles) vs *overlapping* (fails). Comment on when a borrow
+      actually ends (last use, not end of scope).
+
+Done when all four run and predictions are graded.
+
+---
+
 ## ✅ By finishing these:
 
 You won't just "know about" ownership and borrowing — you'll **live it**. Every task makes you feel the compiler's rules and rewards.

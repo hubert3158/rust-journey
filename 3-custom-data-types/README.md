@@ -24,7 +24,8 @@ derives, two tests. Good.
 - `Display` so `{}` prints `$3.02` (two-digit cents, always). `Debug` stays derived.
 - Parse from user text: `"12.34"` / `"$12.34"` / `"7"` → money, with a proper error value
   for garbage (`"12.345"`, `"abc"`, `""`) — no panics. (This is `Option`/`Result` practice
-  before Program 3 makes you build your own.)
+  before Program 3 makes you build your own.) Implement it as the **`FromStr` trait** —
+  that's the std hook that makes `"12.34".parse::<Money>()` work like it does for numbers.
 - Overflow question: what does `Cents(u64::MAX) + Cents(1)` do in your code today?
   Write the test, observe, then decide the policy (checked method returning an error, or
   document the panic). Phase 14 will property-test this exact thing — beat it to the punch.
@@ -51,16 +52,26 @@ habit of asking "what values can this type hold that it shouldn't?"
 - The `match` must be exhaustive with NO catch-all `_` arm for state+event pairs — when
   you add a new variant later, the compiler must point at every place that needs thought.
   (Feel free to add a `PartialRefund` variant at the end to experience exactly that.)
+- Every state also carries shared info (id, amount, currency) in one `PaymentInfo` struct —
+  use **field init shorthand** when building it and **struct update syntax** (`..old`) when
+  producing the next state's copy-with-one-change.
 - Pattern-matching vocabulary — use each at least once, naturally:
   - destructuring variant fields in match arms
   - a match **guard** (e.g. returns after a cutoff date route differently)
   - `if let` for a one-case peek, `let else` for an early return
   - an `@` binding (e.g. capture a reason code while matching a range of codes)
+  - `matches!` for a one-line boolean state check (e.g. `fn is_terminal(&self) -> bool`)
+  - a **slice pattern** on the event history: `[first, .., last]` to report the first and
+    latest event in one match
+- Somewhere you'll match on `&Payment` and bind a `String` field without writing `ref` —
+  stop there and write a 2-line comment on **match ergonomics** (binding modes): why the
+  compiler gives you `&String` automatically and what the old explicit form looked like.
 - Small CLI or test-driven driver that walks a payment through a full happy path and at
   least three rejected transitions.
 
 **What you'll learn:** data-carrying enums, exhaustive matching as a refactoring tool,
-the full pattern syntax (guards, `@`, `if let`, `let else`), errors as values.
+the full pattern syntax (guards, `@`, `if let`, `let else`, `matches!`, slice patterns,
+binding modes), struct update syntax, errors as values.
 *(Phase 15 rebuilds this with typestate so illegal transitions won't even compile —
 keep your version, you'll compare them side by side.)*
 

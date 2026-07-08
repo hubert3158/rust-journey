@@ -41,9 +41,18 @@ in structs (generic params with `Fn` bounds), extension traits, laziness, `IntoI
 - `unsubscribe` support: subscribing returns an id; removing by id works.
 - One callback that consumes something it captured (a one-shot). Discover why the bus
   can't hold `FnOnce` the same way, and document what you did about it.
+- **HRTB, made visible:** your stored callback type `Box<dyn FnMut(&Event)>` is sugar for
+  `Box<dyn for<'a> FnMut(&'a Event)>` — a *higher-ranked* trait bound: "works for EVERY
+  lifetime, picked fresh at each call". Write the desugared form out once. Then meet the
+  case where elision can't save you: add
+  `fn register_extractor<F>(f: F) where F: for<'a> Fn(&'a Event) -> &'a str` (a callback
+  returning a borrow OF its argument) — try writing that bound without `for<'a>` and read
+  the compiler's suggestion. Two-line comment: `for<'a>` vs a plain `<'a>` on the fn —
+  who chooses the lifetime, and when.
 
 **What you'll learn:** `Box<dyn FnMut>` vs `Box<dyn Fn>` vs `FnOnce`, capture modes
-(borrow / mut borrow / move), the `move` keyword, closures living longer than their scope.
+(borrow / mut borrow / move), the `move` keyword, closures living longer than their scope,
+higher-ranked trait bounds (`for<'a>`) — where they hide and when you must write them.
 
 ---
 
@@ -58,10 +67,12 @@ in structs (generic params with `Fn` bounds), extension traits, laziness, `IntoI
   - first 10 primes greater than 1000
   - sum of all even Fibonacci numbers below 1,000,000
   - first prime that is a palindrome AND greater than 10,000
+  - running maximum of the first 20 Fibonacci-to-prime gaps — forces `scan` (state in a
+    chain) and somewhere a `peekable` peek without consuming
 - Each answer verified by a test.
 
 **What you'll learn:** infinite iterators, combinator fluency (`take`, `take_while`, `filter`,
-`skip_while`, `find`, `sum`), thinking in pipelines instead of loops.
+`skip_while`, `find`, `scan`, `peekable`, `sum`), thinking in pipelines instead of loops.
 
 ---
 
