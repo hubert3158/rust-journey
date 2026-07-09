@@ -29,7 +29,7 @@ or a test context. Every panic you write is now a decision, not a habit.
 - Row parsing uses the fail-fast collect idiom at least once:
   `rows.map(parse_row).collect::<Result<Vec<_>, _>>()` — one comment on how `collect`
   can target `Result<Vec<T>, E>` at all (it's a `FromIterator` impl, not magic).
-- One arm somewhere ends in `unreachable!()` or `todo!()` during development — before
+- One arm somewhere ends in `unreachable!()` or `todo\!()` during development — before
   finishing, note in a comment why these type-check in any position (the never type `!`).
 - Tests for each error variant using small fixture files (put them in `files/`).
 - Once, deliberately: build with `panic = "abort"` in the profile and observe what changes
