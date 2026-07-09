@@ -4,6 +4,7 @@
 //!
 
 use core::fmt;
+use std::fmt::write;
 
 use jiff::{Zoned, civil::Date};
 
@@ -135,33 +136,6 @@ enum Payment {
     PartialRefund(),
 }
 
-const REASON_CODE: [&str; 2] = ["R01", "R08"];
-
-enum Events {
-    Submitted { rail_used: String },
-    Settle,
-    Return { reason_code: String },
-    PartialRefund,
-    Cancel,
-}
-
-struct TransitonError {
-    state: &'static str,
-    event: &'static str,
-}
-
-impl fmt::Display for TransitonError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {})", self.state, self.event)
-    }
-}
-
-impl TransitonError {
-    fn new(state: &'static str, event: &'static str) -> Self {
-        Self { state, event }
-    }
-}
-
 impl Payment {
     fn status(&self) {
         match self {
@@ -187,22 +161,19 @@ impl Payment {
             Payment::PartialRefund() => println!("Partially refunded"),
         }
     }
-    fn progress(&mut self, event: Events) -> Result<(), TransitonError> {
+    fn progress(self, event: Events, today: &Date) -> Result<Payment, TransitonError> {
         match self {
             Payment::Scheduled { run_date } => match event {
                 Events::Submitted { rail_used } => {
-                    let today = Zoned::now().date();
-
-                    if today > *run_date {
+                    if *today > run_date {
                         Err(TransitonError::new(self.state(), "Time already passed"))
-                    } else if *run_date > today {
+                    } else if run_date > *today {
                         Err(TransitonError::new(self.state(), "Not yet time to submit"))
                     } else {
-                        *self = Payment::Submitted {
+                        Ok(Payment::Submitted {
                             submitted_at: Zoned::now().date(),
                             rail_used,
-                        };
-                        Ok(())
+                        })
                     }
                 }
                 Events::Settle => Err(TransitonError::new(
@@ -213,12 +184,9 @@ impl Payment {
                     self.state(),
                     "You cannot directly settled a scheduled payment bro",
                 )),
-                Events::Cancel => {
-                    *self = Payment::Canceled {
-                        cancelled_reason: "Canceled by a user".to_string(),
-                    };
-                    Ok(())
-                }
+                Events::Cancel => Ok(Payment::Canceled {
+                    cancelled_reason: "Canceled by a user".to_string(),
+                }),
                 Events::PartialRefund => Err(TransitonError::new(
                     self.state(),
                     "Cant refund scheduled payment",
@@ -228,32 +196,23 @@ impl Payment {
                 submitted_at: _,
                 rail_used: _,
             } => match event {
-                Events::Submitted { rail_used: _ } => Result::Ok(()),
-                Events::Settle => {
-                    *self = Payment::Settled {
-                        setteled_at: Zoned::now().date(),
-                    };
-                    Ok(())
-                }
+                Events::Submitted { rail_used: _ } => Result::Ok(self),
+                Events::Settle => Ok(Payment::Settled {
+                    setteled_at: Zoned::now().date(),
+                }),
                 Events::Return { reason_code } => match reason_code.as_str() {
-                    code @ ("R01" | "R08") => {
-                        *self = Payment::Returned {
-                            reason_code: code.to_string(),
-                            human_message: "Payment returned".to_string(),
-                        };
-                        Ok(())
-                    }
+                    code @ ("R01" | "R08") => Ok(Payment::Returned {
+                        reason_code: code.to_string(),
+                        human_message: "Payment returned".to_string(),
+                    }),
                     _ => Err(TransitonError::new(
                         self.state(),
                         "unknown return reason code: {other}",
                     )),
                 },
-                Events::Cancel => {
-                    *self = Payment::Canceled {
-                        cancelled_reason: "successfully Canceled".to_string(),
-                    };
-                    Ok(())
-                }
+                Events::Cancel => Ok(Payment::Canceled {
+                    cancelled_reason: "successfully Canceled".to_string(),
+                }),
                 Events::PartialRefund => {
                     Err(TransitonError::new(self.state(), "Cannot refund submitted"))
                 }
@@ -263,24 +222,18 @@ impl Payment {
                     self.state(),
                     "Not allowed to chage from settled to submitted",
                 )),
-                Events::Settle => Ok(()),
+                Events::Settle => Ok(self),
                 Events::Return {
                     reason_code: reason,
-                } => {
-                    *self = Payment::Returned {
-                        reason_code: reason,
-                        human_message: " Late return, Money refunded ".to_string(),
-                    };
-                    Ok(())
-                }
+                } => Ok(Payment::Returned {
+                    reason_code: reason,
+                    human_message: " Late return, Money refunded ".to_string(),
+                }),
                 Events::Cancel => Err(TransitonError::new(
                     self.state(),
                     "Sorry cannot cancel a settled payment",
                 )),
-                Events::PartialRefund => {
-                    *self = Payment::PartialRefund();
-                    Ok(())
-                }
+                Events::PartialRefund => Ok(Payment::PartialRefund()),
             },
             Payment::Returned {
                 reason_code: _,
@@ -294,7 +247,7 @@ impl Payment {
                     self.state(),
                     "Cant settle returned payment",
                 )),
-                Events::Return { reason_code: _ } => Ok(()),
+                Events::Return { reason_code: _ } => Ok(self),
                 Events::Cancel => Err(TransitonError::new(
                     self.state(),
                     "Sorry cannot cancel a returned payment",
@@ -319,7 +272,7 @@ impl Payment {
                     self.state(),
                     "Canceled payments cant be returned",
                 )),
-                Events::Cancel => Ok(()),
+                Events::Cancel => Ok(self),
                 Events::PartialRefund => Err(TransitonError::new(
                     self.state(),
                     "Cancelled payment cannot be refunded",
@@ -342,162 +295,45 @@ impl Payment {
         }
     }
 }
-
-fn payment_demo() {
-    //payment state 1
-    let mut payment = Payment::Scheduled {
-        run_date: Zoned::now().date(),
-    };
-
-    //illegal progresson scheduled -> return
-    let return_val = payment.progress(Events::Return {
-        reason_code: REASON_CODE.first().unwrap().to_string(),
-    });
-
-    if let Err(string) = &return_val {
-        println!("{}", string);
-    };
-
-    payment.status();
-
-    //cloning payment state  1 and cancelling it
-    let return_val = payment.clone().progress(Events::Cancel);
-    match return_val {
-        Ok(_) => println!("Cancelled the cloned submitted payment"),
-        Err(e) => {
-            eprintln!("Sorry, couldn't Cancel, {}", e)
-        }
+impl fmt::Display for Payment {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.longitude, self.latitude)
     }
-
-    let return_val = payment.progress(Events::Submitted {
-        rail_used: "ACH".to_string(),
-    });
-
-    let Ok(_) = return_val else {
-        println!("Progressed from scheduled to submitted");
-        return;
-    };
-
-    payment.status();
-
-    let return_val = payment.clone().progress(Events::Return {
-        reason_code: "R03".to_string(),
-    });
-    match return_val {
-        Ok(_) => println!("cloned payment is returned"),
-        Err(e) => eprintln!("issue returning {}, ", e),
-    }
-    let return_val = payment.progress(Events::Settle);
-    match return_val {
-        Ok(_) => println!("payment settled"),
-        Err(e) => eprintln!("issue settling payment{}", e),
-    }
-    payment.status();
 }
+const REASON_CODE: [&str; 2] = ["R01", "R08"];
+
+#[derive(Debug)]
+enum Events {
+    Submitted { rail_used: String },
+    Settle,
+    Return { reason_code: String },
+    PartialRefund,
+    Cancel,
+}
+
+#[derive(Debug)]
+struct TransitonError {
+    state: Payment,
+    event: Events,
+}
+
+impl fmt::Display for TransitonError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {})", self.state, self.event)
+    }
+}
+
+impl TransitonError {
+    fn new(state: &'static str, event: &'static str) -> Self {
+        Self { state, event }
+    }
+}
+
+fn payment_demo() {}
 
 #[cfg(test)]
 mod test {
     use super::*;
-
-    // Helper: reduces repetition and makes each test focus on the transition,
-    // not on constructing the starting state.
-    fn scheduled() -> Payment {
-        Payment::Scheduled {
-            run_date: Zoned::now().date(),
-        }
-    }
-
-    #[test]
-    fn scheduled_to_submitted() {
-        let mut payment = scheduled();
-        let event = Events::Submitted {
-            rail_used: "ACH".to_string(),
-        };
-
-        payment.progress(event).unwrap_or(());
-
-        assert_eq!(
-            payment,
-            Payment::Submitted {
-                submitted_at: Zoned::now().date(),
-                rail_used: "ACH".to_string(),
-            }
-        );
-    }
-
-    #[test]
-    fn submitted_to_settled() {
-        let mut payment = Payment::Submitted {
-            submitted_at: Zoned::now().date(),
-            rail_used: "ACH".to_string(),
-        };
-        let event = Events::Settle;
-
-        payment.progress(event).unwrap_or(());
-
-        assert_eq!(
-            payment,
-            Payment::Settled {
-                setteled_at: Zoned::now().date(),
-            }
-        );
-    }
-
-    #[test]
-    fn full_lifecycle() {
-        let mut payment = scheduled();
-        payment
-            .progress(Events::Submitted {
-                rail_used: "ACH".to_string(),
-            })
-            .unwrap_or(());
-        payment.progress(Events::Settle).unwrap_or(());
-
-        assert_eq!(
-            payment,
-            Payment::Settled {
-                setteled_at: Zoned::now().date(),
-            }
-        );
-    }
-
-    #[test]
-    fn scheduled_to_settled() {
-        let mut payment = Payment::Scheduled {
-            run_date: Zoned::now().date(),
-        };
-        let event_settle = Events::Settle;
-        let val = payment.progress(event_settle);
-        assert!(val.is_err());
-    }
-    #[test]
-    fn settled_a_cancelled() {
-        let mut payment = Payment::Settled {
-            setteled_at: Zoned::now().date(),
-        };
-        let event_settle = Events::Cancel;
-        let val = payment.progress(event_settle);
-        assert!(val.is_err());
-    }
-    #[test]
-    fn cancel_a_setteled() {
-        let mut payment = Payment::Canceled {
-            cancelled_reason: "create new as cancelled".to_string(),
-        };
-        let event_settle = Events::Settle;
-        let val = payment.progress(event_settle);
-        assert!(val.is_err());
-    }
-    #[test]
-    fn return_a_submitted() {
-        let mut payment = Payment::Submitted {
-            submitted_at: Zoned::now().date(),
-            rail_used: "ACH".to_string(),
-        };
-        let event_return = Events::PartialRefund;
-        let val = payment.progress(event_return);
-        assert!(val.is_err())
-    }
 }
 
 // ===== PROGRAM 3 — Your own Option and Result =====
