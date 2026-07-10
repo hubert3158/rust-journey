@@ -3,6 +3,8 @@
 //! The phase's one big idea: make illegal states unrepresentable.
 //!
 
+use core::fmt;
+
 use jiff::{Zoned, civil::Date};
 
 pub fn main() {
@@ -124,7 +126,7 @@ enum Payment {
         setteled_at: Date,
     },
     Returned {
-        return_code: String,
+        return_code: RetrunCode,
         human_message: String,
     },
     Canceled {
@@ -146,11 +148,11 @@ impl Payment {
             ),
             Payment::Settled { setteled_at } => println!("Settled, Settled at: {}", setteled_at),
             Payment::Returned {
-                return_code: reason_code,
+                return_code,
                 human_message,
             } => println!(
                 "Returned, Reason Code:{}, Human Message:{}",
-                reason_code, human_message
+                return_code, human_message
             ),
             Payment::Canceled { cancelled_reason } => {
                 println!("Canceled, Cancelled Reason:{}", cancelled_reason)
@@ -187,14 +189,15 @@ impl Payment {
                 Events::Settle => Ok(Payment::Settled {
                     setteled_at: Zoned::now().date(),
                 }),
-                Events::Return {
-                    return_code: reason_code,
-                } => match reason_code.as_str() {
-                    code @ ("R01" | "R08") => Ok(Payment::Returned {
-                        return_code: code.to_string(),
-                        human_message: "Payment returned".to_string(),
+                Events::Return { return_code } => match return_code {
+                    RetrunCode::R01 => Ok(Payment::Returned {
+                        return_code: RetrunCode::R01,
+                        human_message: "Insufficient fund".to_string(),
                     }),
-                    _ => Err(TransitonError::new(self, event)),
+                    RetrunCode::R08 => Ok(Payment::Returned {
+                        return_code: RetrunCode::R08,
+                        human_message: "Payment Stopped".to_string(),
+                    }),
                 },
                 Events::Cancel => Ok(Payment::Canceled {
                     cancelled_reason: "successfully Canceled".to_string(),
@@ -247,34 +250,16 @@ impl Payment {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 enum RetrunCode {
-    R01 {
-        name: &'static str,
-        description: &'static str,
-    },
-    R08 {
-        name: &'static str,
-        description: &'static str,
-    },
+    R01,
+    R08,
 }
-
-impl RetrunCode {
-    fn get_name(&self) -> String {
+impl fmt::Display for RetrunCode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RetrunCode::R01 { name, .. } => name.to_string(),
-            RetrunCode::R08 { name, .. } => name.to_string(),
-        }
-    }
-    fn get_description(&self) -> String {
-        match self {
-            RetrunCode::R01 {
-                name: _,
-                description,
-            } => description.to_string(),
-            RetrunCode::R08 {
-                name: _,
-                description,
-            } => description.to_string(),
+            RetrunCode::R01 => write!(f, "R01"),
+            RetrunCode::R08 => write!(f, "R08"),
         }
     }
 }
@@ -283,7 +268,7 @@ impl RetrunCode {
 enum Events {
     Submitted { rail_used: String },
     Settle,
-    Return { return_code: String },
+    Return { return_code: RetrunCode },
     PartialRefund,
     Cancel,
 }
@@ -307,8 +292,8 @@ trait Prnt {
 impl Prnt for Result<Payment, TransitonError> {
     fn print(&self) {
         match &self {
-            Ok(p) => print!("{p:#?}"),
-            Err(e) => print!("{e:#?}"),
+            Ok(p) => println!("{p:#?}"),
+            Err(e) => println!("{e:#?}"),
         }
     }
 }
@@ -340,6 +325,19 @@ fn payment_demo() {
     //payment settled -> partial refund
     let settled_payment = Payment::Settled { setteled_at: today };
     let return_val = settled_payment.progress(Events::PartialRefund, &today);
+    return_val.print();
+
+    //payment submitted -> returned
+    let submitted_payment = Payment::Submitted {
+        submitted_at: today,
+        rail_used: "ACH".to_string(),
+    };
+    let return_val = submitted_payment.progress(
+        Events::Return {
+            return_code: RetrunCode::R08,
+        },
+        &today,
+    );
     return_val.print();
 }
 
