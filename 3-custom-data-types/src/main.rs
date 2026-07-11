@@ -316,7 +316,7 @@ fn payment_demo() {
     return_val.print();
 
     //payment submitted -> settled
-    println!("payment schedule -> submitted");
+    println!("payment submitted-> settled");
     let submitted_payment = Payment::Submitted {
         submitted_at: today,
         rail_used: "ACH".into(),
@@ -377,8 +377,133 @@ mod test {
     use super::*;
 
     #[test]
-    fn name() {
-        todo!();
+    fn scheduled_to_submitted() {
+        let today = Zoned::now().date();
+
+        //scheduling payment
+        let scheduled_payment = Payment::Scheduled { run_date: today };
+        scheduled_payment.status();
+
+        //payment schedule -> submitted
+        println!("payment schedule -> submitted");
+        let return_val = scheduled_payment.progress(
+            Events::Submitted {
+                rail_used: "ACH".to_string(),
+            },
+            &today,
+        );
+
+        assert_eq!(
+            return_val.unwrap(),
+            Payment::Submitted {
+                submitted_at: today,
+                rail_used: "ACH".to_string()
+            }
+        )
+    }
+
+    #[test]
+    fn submitted_to_settled() {
+        //payment submitted -> settled
+        println!("payment submitted-> settled");
+        let today = Zoned::now().date();
+        let submitted_payment = Payment::Submitted {
+            submitted_at: today,
+            rail_used: "ACH".into(),
+        };
+        let return_val = submitted_payment.progress(Events::Settle, &today);
+        assert_eq!(return_val.unwrap(), Payment::Settled { setteled_at: today })
+    }
+
+    #[test]
+    fn settled_to_partialrefund() {
+        // //payment settled -> partial refund
+        println!("payment settled -> partial refund");
+        let today = Zoned::now().date();
+        let settled_payment = Payment::Settled { setteled_at: today };
+        let return_val = settled_payment.progress(Events::PartialRefund, &today);
+        return_val.print();
+        assert_eq!(return_val.unwrap(), Payment::PartialRefund());
+    }
+
+    #[test]
+    fn submitted_to_returned() {
+        // //payment submitted -> returned
+        println!("payment submitted -> returned");
+        let today = Zoned::now().date();
+        let submitted_payment = Payment::Submitted {
+            submitted_at: today,
+            rail_used: "ACH".to_string(),
+        };
+        let return_val = submitted_payment.progress(
+            Events::Return {
+                return_code: RetrunCode::R08,
+            },
+            &today,
+        );
+        assert!(return_val.is_ok());
+    }
+
+    #[test]
+    fn submitted_to_cancelled() {
+        //payment submitted -> cancel
+        println!("payment submitted -> cancel");
+        let today = Zoned::now().date();
+        let submitted_payment = Payment::Submitted {
+            submitted_at: today,
+            rail_used: "ACH".to_string(),
+        };
+        let return_val = submitted_payment.progress(
+            Events::Cancel {
+                reason: "Coz i wanted to ".to_string(),
+            },
+            &today,
+        );
+        assert_eq!(
+            return_val.unwrap(),
+            Payment::Canceled {
+                cancelled_reason: "Coz i wanted to ".to_string()
+            }
+        )
+    }
+
+    #[test]
+    fn canceled_to_returned_err() {
+        let today = Zoned::now().date();
+        //payment Canceled -> return
+        println!("payment settled -> return");
+        let cancelled_payment = Payment::Canceled {
+            cancelled_reason: ("created a cancelled payment".to_string()),
+        };
+        let return_val = cancelled_payment.progress(
+            Events::Return {
+                return_code: RetrunCode::R01,
+            },
+            &today,
+        );
+        assert!(return_val.is_err())
+    }
+
+    #[test]
+    fn canceled_to_partialrefund_err() {
+        let today = Zoned::now().date();
+        //payment cancelled-> refund
+        println!("payment cancelled-> refund");
+        let cancelled_payment = Payment::Canceled {
+            cancelled_reason: ("created a cancelled payment".to_string()),
+        };
+        let return_val = cancelled_payment.progress(Events::PartialRefund, &today);
+        assert!(return_val.is_err())
+    }
+
+    #[test]
+    fn scheduled_to_settled_err() {
+        let today = Zoned::now().date();
+        //payment scheduled -> settled
+        println!("payment scheduled -> settled");
+        let cancelled_payment = Payment::Scheduled { run_date: today };
+        let return_val = cancelled_payment.progress(Events::Settle, &today);
+        assert!(return_val.is_err())
     }
 }
 
