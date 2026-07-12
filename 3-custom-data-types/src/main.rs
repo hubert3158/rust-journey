@@ -163,17 +163,11 @@ impl Payment {
     fn progress(self, event: Events, today: &Date) -> Result<Payment, TransitonError> {
         match self {
             Payment::Scheduled { run_date } => match &event {
-                Events::Submitted { rail_used } => {
-                    if *today == run_date {
-                        let rail_used = rail_used.to_string();
-                        Ok(Payment::Submitted {
-                            submitted_at: Zoned::now().date(),
-                            rail_used,
-                        })
-                    } else {
-                        Err(TransitonError::new(self, event))
-                    }
-                }
+                Events::Submitted { rail_used } if *today == run_date => Ok(Payment::Submitted {
+                    submitted_at: Zoned::now().date(),
+                    rail_used: rail_used.to_string(),
+                }),
+                Events::Submitted { rail_used: _ } => Err(TransitonError::new(self, event)),
                 Events::Settle => Err(TransitonError::new(self, event)),
                 Events::Return { return_code: _ } => Err(TransitonError::new(self, event)),
                 Events::Cancel { reason } => Ok(Payment::Canceled {
@@ -210,7 +204,7 @@ impl Payment {
                 Events::Return {
                     return_code: reason,
                 } => Ok(Payment::Returned {
-                    return_code: reason.clone(), // todo!() , clone why
+                    return_code: reason.clone(), //INFO, clone why
                     human_message: " Late return, Money refunded ".to_string(),
                 }),
                 Events::Cancel { reason: _ } => Err(TransitonError::new(self, event)),
@@ -238,16 +232,6 @@ impl Payment {
             Payment::PartialRefund() => Err(TransitonError::new(self, event)),
         }
     }
-    // fn state(&self) -> &'static str {
-    //     match self {
-    //         Payment::Scheduled { .. } => "Scheduled",
-    //         Payment::Submitted { .. } => "Submitted",
-    //         Payment::Settled { .. } => "Settled",
-    //         Payment::Returned { .. } => "Returned",
-    //         Payment::Canceled { .. } => "Canceled",
-    //         Payment::PartialRefund() => "PartialRefund",
-    //     }
-    // }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -323,6 +307,9 @@ fn payment_demo() {
     };
     let return_val = submitted_payment.progress(Events::Settle, &today);
     return_val.print();
+    if let Ok(Payment::Settled { setteled_at }) = return_val {
+        println!("settled on {}", setteled_at);
+    }
 
     //payment settled -> partial refund
     println!("payment settled -> partial refund");
