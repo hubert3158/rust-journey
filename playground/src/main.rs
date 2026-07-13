@@ -1,15 +1,19 @@
-enum Message {
-    Move { x: i32, y: i32 },
-}
-
 fn main() {
-    let msg = Message::Move { x: 3, y: 12 };
+    fn consume_with_relish<F>(func: F)
+    where
+        F: FnOnce() -> String,
+    {
+        // `func` consumes its captured variables, so it cannot be run more
+        // than once.
+        println!("Consumed: {}", func());
 
-    match msg {
-        // bind the whole y value while also checking it's in range
-        Message::Move { x, y: xy @ 10..=20 } => {
-            println!("x={x}, y in range: {xy}");
-        }
-        Message::Move { x, y } => println!("x={x}, y={y}"),
+        println!("Delicious!");
+
+        // Attempting to invoke `func()` again will throw a `use of moved
+        // value` error for `func`.
     }
+
+    let x = String::from("x");
+    let consume_and_return_x = move || x;
+    consume_with_relish(consume_and_return_x);
 }

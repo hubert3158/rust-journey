@@ -5,6 +5,9 @@
 
 #![allow(unused_imports)]
 
+use core::num;
+use std::{borrow::Cow, collections::btree_map::Keys, i64};
+
 use jiff::{Zoned, civil::Date};
 
 pub fn main() {
@@ -518,22 +521,77 @@ pub fn main() {
 
 fn program3() {
     enum Maybe<T> {
-        Ok(T),
-        Err(),
+        Some(T),
+        None,
     }
-
     enum Outcome<T, E> {
         Ok(T),
         Err(E),
     }
 
-    fn test<T>(x: T) -> Option<T> {
-        return Some(x);
+    //       * transform the inner value when present (map)
+    //       * chain a fallible step so failures short-circuit (and_then)
+    //       * fall back to a default (unwrap_or / unwrap_or_else)
+    //       * convert between them: Maybe -> Outcome by supplying an error (ok_or)
+
+    impl<T> Maybe<T> {
+        fn map<F: FnOnce(T) -> T>(self, f: F) -> Maybe<T> {
+            match self {
+                Maybe::Some(t) => Maybe::Some(f(t)),
+                Maybe::None => Maybe::None,
+            }
+        }
+        fn to_outcome<E>(self, e: E) -> Outcome<T, E> {
+            match self {
+                Maybe::Some(t) => Outcome::Ok(t),
+                Maybe::None => Outcome::Err(e),
+            }
+        }
     }
-    fn test1<T, E>(x: T) -> Result<T, E> {
-        return Ok(x);
+
+    fn parse_port(s: String) -> Maybe<u64> {
+        let key = get_key(&s);
+        let key = Outcome::Ok(()) else{
+
+        }
+        let value = get_value(&s);
+        if is_valid_range {
+            Maybe::Some(number)
+        } else {
+            Maybe::None
+        }
+    }
+
+    fn get_key<'a>(s: &'a String) -> Outcome<&'a str, &'a str> {
+        let parsed = s.split("=");
+        let mut iter = parsed.into_iter().peekable();
+        let key = iter.next().unwrap();
+        if key == "port" {
+            Outcome::Ok(key)
+        } else {
+            Outcome::Err(key)
+        }
+    }
+    fn get_value<'a>(s: &'a String) -> Outcome<&'a str, &'a str> {
+        let parsed = s.split("=");
+        let mut iter = parsed.into_iter().peekable();
+        iter.next().unwrap();
+        let value = iter.next().unwrap();
+        let value_number = value.parse::<u64>().unwrap();
+        match value_number {
+            0..65535 => Outcome::Ok(value),
+            _ => Outcome::Err("Invalid value"),
+        }
+    }
+
+    let config_text = String::from("port=8080");
+    let port = parse_port(config_text);
+    match port {
+        Maybe::Some(t) => println!("Found value {}", t),
+        Maybe::None => println!("Value not found"),
     }
 }
+
 // ===== PROGRAM 4 — JSON value in memory =====
 // Represent ANY JSON document as one Rust type, then pretty-print it back out.
 // Features it must have:
