@@ -541,6 +541,15 @@ fn program3() {
                 Maybe::None => Maybe::None,
             }
         }
+        fn inspect<F>(self,f:F)
+            where F:FnOnce()->()
+        {
+            match self {
+                Maybe::Some(v) => Maybe::Some(f(v)),
+                Maybe::None => todo!(),
+            }
+
+        }
         fn to_outcome<E>(self, e: E) -> Outcome<T, E> {
             match self {
                 Maybe::Some(t) => Outcome::Ok(t),
@@ -549,17 +558,20 @@ fn program3() {
         }
     }
 
-    fn parse_port(s: String) -> Maybe<u64> {
-        let key = get_key(&s);
-        let key = Outcome::Ok(()) else{
+    impl<T, E> Outcome<T, E> {
+        fn to_maybe(self) -> Maybe<T> {
+            match self {
+                Outcome::Ok(v) => Maybe::Some(v),
+                Outcome::Err(_) => Maybe::None,
+            }
+        }
+    }
 
-        }
-        let value = get_value(&s);
-        if is_valid_range {
-            Maybe::Some(number)
-        } else {
-            Maybe::None
-        }
+    fn parse_port<'a>(s: String) -> Maybe<&'a str> {
+        let key = get_key(&s).to_maybe();
+        key.map(|x| println!("{}", x); x);
+        let value = get_value(&s).to_maybe();
+        return value;
     }
 
     fn get_key<'a>(s: &'a String) -> Outcome<&'a str, &'a str> {
@@ -580,7 +592,7 @@ fn program3() {
         let value_number = value.parse::<u64>().unwrap();
         match value_number {
             0..65535 => Outcome::Ok(value),
-            _ => Outcome::Err("Invalid value"),
+            _ => Outcome::Err("Invalid range"),
         }
     }
 
