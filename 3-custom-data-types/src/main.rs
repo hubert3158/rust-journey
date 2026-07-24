@@ -7,6 +7,7 @@
 // #![allow(unused)]
 
 use core::num;
+use std::{num::ParseIntError, string::ParseError};
 
 use jiff::{Zoned, civil::Date};
 
@@ -621,10 +622,35 @@ fn program3() {
             }
         }
     }
+    fn find_key<'a>(hay: &'a str, needle: &str) -> Maybe<&'a str> {
+        let x: Vec<_> = hay.split("=").collect();
+
+        if (x.len() != 2) || (*x.first().unwrap() != needle) {
+            Maybe::None
+        } else {
+            Maybe::Some(x.get(1).unwrap())
+        }
+    }
+    fn parse_number(str: &str) -> Outcome<u16, String> {
+        match str.parse::<u16>() {
+            Ok(t) => Outcome::Ok(t),
+            Err(e) => Outcome::Err(e.to_string()),
+        }
+    }
+    fn check_port_validity(port: u16) -> Outcome<u16, String> {
+        match port {
+            n @ 1024..=65535 => Outcome::Ok(n),
+            _ => Outcome::Err("Port not in range".to_string()),
+        }
+    }
 
     //   - A worked example end-to-end: parse config text "port=8080" -> find key ->
     //     parse number -> validate range, chained, one failure path.
     let parse_config_text = "port=8080";
+    let port = find_key(parse_config_text, "port")
+        .ok_or("Couldnt find key")
+        .map(parse_number)
+        .map(check_port_validity);
 }
 
 // ===== PROGRAM 4 — JSON value in memory =====
