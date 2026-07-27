@@ -7,7 +7,7 @@
 // #![allow(unused)]
 
 use core::num;
-use std::{num::ParseIntError, string::ParseError};
+use std::{num::ParseIntError, ops::Add, string::ParseError};
 
 use jiff::{Zoned, civil::Date};
 
@@ -644,13 +644,43 @@ fn program3() {
         }
     }
 
+    fn find_key_std<'a>(hay: &'a str, needle: &str) -> Option<&'a str> {
+        let x: Vec<_> = hay.split("=").collect();
+
+        if (x.len() != 2) || (*x.first().unwrap() != needle) {
+            Option::None
+        } else {
+            Option::Some(x.get(1).unwrap())
+        }
+    }
+    fn parse_number_std(str: &str) -> Result<u16, String> {
+        match str.parse::<u16>() {
+            Ok(t) => Result::Ok(t),
+            Err(e) => Result::Err(e.to_string()),
+        }
+    }
+    fn check_port_validity_std(port: u16) -> Result<u16, String> {
+        match port {
+            n @ 1024..=65535 => Result::Ok(n),
+            _ => Result::Err("Port not in range".to_string()),
+        }
+    }
+
     //   - A worked example end-to-end: parse config text "port=8080" -> find key ->
     //     parse number -> validate range, chained, one failure path.
     let parse_config_text = "port=8080";
     let port = find_key(parse_config_text, "port")
-        .ok_or("Couldnt find key")
-        .map(parse_number)
-        .map(check_port_validity);
+        .ok_or("Couldnt find key".to_string())
+        .and_then(parse_number)
+        .and_then(check_port_validity);
+
+    println!("Port( custom ):{:?}", port);
+    let port = find_key_std(parse_config_text, "port")
+        .ok_or("Couldnt find key".to_string())
+        .and_then(parse_number_std)
+        .and_then(check_port_validity_std);
+
+    println!("Port( std::):{:?}", port);
 }
 
 // ===== PROGRAM 4 — JSON value in memory =====
