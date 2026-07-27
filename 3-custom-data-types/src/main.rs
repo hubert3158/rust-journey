@@ -3,13 +3,7 @@
 //! The phase's one big idea: make illegal states unrepresentable.
 //!
 
-#![allow(unused_imports)]
 // #![allow(unused)]
-
-use core::num;
-use std::{num::ParseIntError, ops::Add, string::ParseError};
-
-use jiff::{Zoned, civil::Date};
 
 pub fn main() {
     println!("custom-data-types started");
@@ -581,22 +575,13 @@ fn program3() {
 
     // let x = Result::Err(2);
     // let y = Option::Some(2);
-    // x.or_else(op)
+    // y.ok_or(err)
     //
     //       * transform the inner value when present (map)
     //       * chain a fallible step so failures short-circuit (and_then)
     //       * fall back to a default (unwrap_or / unwrap_or_else)
     //       * convert between them: Maybe -> Outcome by supplying an error (ok_or)
     impl<T, E> Outcome<T, E> {
-        fn ok_or(&self) -> Maybe<T>
-        where
-            T: Clone,
-        {
-            match self {
-                Outcome::Ok(v) => Maybe::Some(v.clone()),
-                Outcome::Err(_) => Maybe::None,
-            }
-        }
         fn map<U, F>(self, f: F) -> Outcome<U, E>
         where
             F: FnOnce(T) -> U,
@@ -622,6 +607,7 @@ fn program3() {
             }
         }
     }
+
     fn find_key<'a>(hay: &'a str, needle: &str) -> Maybe<&'a str> {
         let x: Vec<_> = hay.split("=").collect();
 
