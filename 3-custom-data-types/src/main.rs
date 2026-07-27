@@ -9,7 +9,8 @@ pub fn main() {
     println!("custom-data-types started");
     // money_handler();
     // payment_demo();
-    program3();
+    // program3();
+    program4();
 }
 
 // ===== PROGRAM 1 — Money handler =====
@@ -514,160 +515,160 @@ pub fn main() {
 //   generics by building the two types you'll use daily forever, combinators from the
 //   inside, why `?` isn't magic, enum + impl + match fluency.
 
-fn program3() {
-    #[derive(Debug)]
-    enum Maybe<T> {
-        Some(T),
-        None,
-    }
-    #[derive(Debug)]
-    enum Outcome<T, E> {
-        Ok(T),
-        Err(E),
-    }
-
-    //       * transform the inner value when present (map)
-    //       * chain a fallible step so failures short-circuit (and_then)
-    //       * fall back to a default (unwrap_or / unwrap_or_else)
-    //       * convert between them: Maybe -> Outcome by supplying an error (ok_or)
-
-    impl<T> Maybe<T> {
-        fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Maybe<U> {
-            match self {
-                Maybe::Some(t) => Maybe::Some(f(t)),
-                Maybe::None => Maybe::None,
-            }
-        }
-        fn unwrap_or(self, default: T) -> T {
-            match self {
-                Maybe::Some(t) => t,
-                Maybe::None => default,
-            }
-        }
-        fn and_then<F, U>(self, f: F) -> Maybe<U>
-        where
-            F: FnOnce(T) -> Maybe<U>,
-        {
-            match self {
-                Maybe::Some(t) => f(t),
-                Maybe::None => Maybe::None,
-            }
-        }
-        fn inspect<F>(self, f: F) -> Maybe<T>
-        where
-            F: FnOnce(&T),
-        {
-            if let Maybe::Some(ref t) = self {
-                f(t);
-            }
-            self
-        }
-        fn ok_or<E>(&self, e: E) -> Outcome<T, E>
-        where
-            T: Clone,
-        {
-            match self {
-                Maybe::Some(t) => Outcome::Ok(t.clone()),
-                Maybe::None => Outcome::Err(e),
-            }
-        }
-    }
-
-    // let x = Result::Err(2);
-    // let y = Option::Some(2);
-    // y.ok_or(err)
-    //
-    //       * transform the inner value when present (map)
-    //       * chain a fallible step so failures short-circuit (and_then)
-    //       * fall back to a default (unwrap_or / unwrap_or_else)
-    //       * convert between them: Maybe -> Outcome by supplying an error (ok_or)
-    impl<T, E> Outcome<T, E> {
-        fn map<U, F>(self, f: F) -> Outcome<U, E>
-        where
-            F: FnOnce(T) -> U,
-        {
-            match self {
-                Outcome::Ok(t) => Outcome::Ok(f(t)),
-                Outcome::Err(e) => Outcome::Err(e),
-            }
-        }
-        fn and_then<U, F>(self, f: F) -> Outcome<U, E>
-        where
-            F: FnOnce(T) -> Outcome<U, E>,
-        {
-            match self {
-                Outcome::Ok(t) => f(t),
-                Outcome::Err(e) => Outcome::Err(e),
-            }
-        }
-        fn unwrap_or(self, default: T) -> T {
-            match self {
-                Outcome::Ok(t) => t,
-                Outcome::Err(_) => default,
-            }
-        }
-    }
-
-    fn find_key<'a>(hay: &'a str, needle: &str) -> Maybe<&'a str> {
-        let x: Vec<_> = hay.split("=").collect();
-
-        if (x.len() != 2) || (*x.first().unwrap() != needle) {
-            Maybe::None
-        } else {
-            Maybe::Some(x.get(1).unwrap())
-        }
-    }
-    fn parse_number(str: &str) -> Outcome<u16, String> {
-        match str.parse::<u16>() {
-            Ok(t) => Outcome::Ok(t),
-            Err(e) => Outcome::Err(e.to_string()),
-        }
-    }
-    fn check_port_validity(port: u16) -> Outcome<u16, String> {
-        match port {
-            n @ 1024..=65535 => Outcome::Ok(n),
-            _ => Outcome::Err("Port not in range".to_string()),
-        }
-    }
-
-    fn find_key_std<'a>(hay: &'a str, needle: &str) -> Option<&'a str> {
-        let x: Vec<_> = hay.split("=").collect();
-
-        if (x.len() != 2) || (*x.first().unwrap() != needle) {
-            Option::None
-        } else {
-            Option::Some(x.get(1).unwrap())
-        }
-    }
-    fn parse_number_std(str: &str) -> Result<u16, String> {
-        match str.parse::<u16>() {
-            Ok(t) => Result::Ok(t),
-            Err(e) => Result::Err(e.to_string()),
-        }
-    }
-    fn check_port_validity_std(port: u16) -> Result<u16, String> {
-        match port {
-            n @ 1024..=65535 => Result::Ok(n),
-            _ => Result::Err("Port not in range".to_string()),
-        }
-    }
-
-    //   - A worked example end-to-end: parse config text "port=8080" -> find key ->
-    //     parse number -> validate range, chained, one failure path.
-    let parse_config_text = "port=8080";
-    let port = find_key(parse_config_text, "port")
-        .ok_or("Couldnt find key".to_string())
-        .and_then(parse_number)
-        .and_then(check_port_validity);
-
-    println!("Port( custom ):{:?}", port);
-    let port = find_key_std(parse_config_text, "port")
-        .ok_or("Couldnt find key".to_string())
-        .and_then(parse_number_std)
-        .and_then(check_port_validity_std);
-
-    println!("Port( std::):{:?}", port);
-}
+// fn program3() {
+//     #[derive(Debug)]
+//     enum Maybe<T> {
+//         Some(T),
+//         None,
+//     }
+//     #[derive(Debug)]
+//     enum Outcome<T, E> {
+//         Ok(T),
+//         Err(E),
+//     }
+//
+//     //       * transform the inner value when present (map)
+//     //       * chain a fallible step so failures short-circuit (and_then)
+//     //       * fall back to a default (unwrap_or / unwrap_or_else)
+//     //       * convert between them: Maybe -> Outcome by supplying an error (ok_or)
+//
+//     impl<T> Maybe<T> {
+//         fn map<U, F: FnOnce(T) -> U>(self, f: F) -> Maybe<U> {
+//             match self {
+//                 Maybe::Some(t) => Maybe::Some(f(t)),
+//                 Maybe::None => Maybe::None,
+//             }
+//         }
+//         fn unwrap_or(self, default: T) -> T {
+//             match self {
+//                 Maybe::Some(t) => t,
+//                 Maybe::None => default,
+//             }
+//         }
+//         fn and_then<F, U>(self, f: F) -> Maybe<U>
+//         where
+//             F: FnOnce(T) -> Maybe<U>,
+//         {
+//             match self {
+//                 Maybe::Some(t) => f(t),
+//                 Maybe::None => Maybe::None,
+//             }
+//         }
+//         fn inspect<F>(self, f: F) -> Maybe<T>
+//         where
+//             F: FnOnce(&T),
+//         {
+//             if let Maybe::Some(ref t) = self {
+//                 f(t);
+//             }
+//             self
+//         }
+//         fn ok_or<E>(&self, e: E) -> Outcome<T, E>
+//         where
+//             T: Clone,
+//         {
+//             match self {
+//                 Maybe::Some(t) => Outcome::Ok(t.clone()),
+//                 Maybe::None => Outcome::Err(e),
+//             }
+//         }
+//     }
+//
+//     // let x = Result::Err(2);
+//     // let y = Option::Some(2);
+//     // y.ok_or(err)
+//     //
+//     //       * transform the inner value when present (map)
+//     //       * chain a fallible step so failures short-circuit (and_then)
+//     //       * fall back to a default (unwrap_or / unwrap_or_else)
+//     //       * convert between them: Maybe -> Outcome by supplying an error (ok_or)
+//     impl<T, E> Outcome<T, E> {
+//         fn map<U, F>(self, f: F) -> Outcome<U, E>
+//         where
+//             F: FnOnce(T) -> U,
+//         {
+//             match self {
+//                 Outcome::Ok(t) => Outcome::Ok(f(t)),
+//                 Outcome::Err(e) => Outcome::Err(e),
+//             }
+//         }
+//         fn and_then<U, F>(self, f: F) -> Outcome<U, E>
+//         where
+//             F: FnOnce(T) -> Outcome<U, E>,
+//         {
+//             match self {
+//                 Outcome::Ok(t) => f(t),
+//                 Outcome::Err(e) => Outcome::Err(e),
+//             }
+//         }
+//         fn unwrap_or(self, default: T) -> T {
+//             match self {
+//                 Outcome::Ok(t) => t,
+//                 Outcome::Err(_) => default,
+//             }
+//         }
+//     }
+//
+//     fn find_key<'a>(hay: &'a str, needle: &str) -> Maybe<&'a str> {
+//         let x: Vec<_> = hay.split("=").collect();
+//
+//         if (x.len() != 2) || (*x.first().unwrap() != needle) {
+//             Maybe::None
+//         } else {
+//             Maybe::Some(x.get(1).unwrap())
+//         }
+//     }
+//     fn parse_number(str: &str) -> Outcome<u16, String> {
+//         match str.parse::<u16>() {
+//             Ok(t) => Outcome::Ok(t),
+//             Err(e) => Outcome::Err(e.to_string()),
+//         }
+//     }
+//     fn check_port_validity(port: u16) -> Outcome<u16, String> {
+//         match port {
+//             n @ 1024..=65535 => Outcome::Ok(n),
+//             _ => Outcome::Err("Port not in range".to_string()),
+//         }
+//     }
+//
+//     fn find_key_std<'a>(hay: &'a str, needle: &str) -> Option<&'a str> {
+//         let x: Vec<_> = hay.split("=").collect();
+//
+//         if (x.len() != 2) || (*x.first().unwrap() != needle) {
+//             Option::None
+//         } else {
+//             Option::Some(x.get(1).unwrap())
+//         }
+//     }
+//     fn parse_number_std(str: &str) -> Result<u16, String> {
+//         match str.parse::<u16>() {
+//             Ok(t) => Result::Ok(t),
+//             Err(e) => Result::Err(e.to_string()),
+//         }
+//     }
+//     fn check_port_validity_std(port: u16) -> Result<u16, String> {
+//         match port {
+//             n @ 1024..=65535 => Result::Ok(n),
+//             _ => Result::Err("Port not in range".to_string()),
+//         }
+//     }
+//
+//     //   - A worked example end-to-end: parse config text "port=8080" -> find key ->
+//     //     parse number -> validate range, chained, one failure path.
+//     let parse_config_text = "port=8080";
+//     let port = find_key(parse_config_text, "port")
+//         .ok_or("Couldnt find key".to_string())
+//         .and_then(parse_number)
+//         .and_then(check_port_validity);
+//
+//     println!("Port( custom ):{:?}", port);
+//     let port = find_key_std(parse_config_text, "port")
+//         .ok_or("Couldnt find key".to_string())
+//         .and_then(parse_number_std)
+//         .and_then(check_port_validity_std);
+//
+//     println!("Port( std::):{:?}", port);
+// }
 
 // ===== PROGRAM 4 — JSON value in memory =====
 // Represent ANY JSON document as one Rust type, then pretty-print it back out.
@@ -688,6 +689,8 @@ fn program3() {
 //   over recursive data, Vec vs Box (when does the enum need which?).
 //   (This type is load-bearing later: Phase 4's serde-lite outputs it, Phase 12's
 //   json! macro constructs it.)
+
+fn program4() {}
 
 // ===== PROGRAM 5 — ⭐ Expression calculator (capstone, pulls in everything above) =====
 // Read a math expression as text, compute the result. The text -> structure -> result
