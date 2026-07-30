@@ -5,6 +5,8 @@
 
 // #![allow(unused)]
 
+use std::{collections::HashMap, fs::File, io::Read};
+
 pub fn main() {
     println!("custom-data-types started");
     // money_handler();
@@ -690,7 +692,55 @@ pub fn main() {
 //   (This type is load-bearing later: Phase 4's serde-lite outputs it, Phase 12's
 //   json! macro constructs it.)
 
-fn program4() {}
+fn program4() {
+    //     {
+    //   "a": "one",
+    //   "b": ["one", "two"],
+    //   "c": ["1", "2",3],
+    //   "d": {
+    //     "a": "two"
+    //     "b": "three"
+    //   },
+    //   "e": [1, 2]
+    // }
+
+    enum node<K, T> {
+        Hash(HashMap<K, Object<T>>),
+    }
+    enum Object<T> {
+        String(T),
+        Vec(Vec<T>),
+    }
+
+    // {
+    //   "name": "Subash Acharya",
+    //   "age": "30",
+    //   "height": "5.5",
+    //   "email": "hubert"
+    // }
+    // let file = File::open("../files/example_json_complex.json");
+    let file = File::open("../files/exampleJson.json");
+    let mut f = match file {
+        Result::Ok(t) => t,
+        Result::Err(e) => {
+            eprintln!("error opening file, error: {}", e);
+            return;
+        }
+    };
+    let mut data = String::new();
+    let s = f.read_to_string(&mut data);
+    if let Result::Err(e) = s {
+        println!("{}", e);
+    }
+
+    fn get_between_brackets<'a>(hay: &'a str, bracket1: &str, bracket2: &str) -> &'a str {
+        hay.trim()
+            .trim_start_matches(bracket1)
+            .trim_end_matches(bracket2)
+    }
+
+    println!("{}", get_between_brackets(&data, "{", "}"));
+}
 
 // ===== PROGRAM 5 — ⭐ Expression calculator (capstone, pulls in everything above) =====
 // Read a math expression as text, compute the result. The text -> structure -> result

@@ -1,6 +1,9 @@
 {
   "name": "Subash Acharya",
-  "age": 30,
-  "height": 5.5,
-  "email": "hubert"
+  "age": "30",
+  "height": "5.5",
+  "email": "hubert",
+  "a": {
+    "b": "c"
+  }
 }
