@@ -5,7 +5,9 @@
 
 // #![allow(unused)]
 
-use std::{collections::HashMap, fs::File, io::Read};
+use std::{fs::File, io::Read, iter::Map};
+
+use jiff::Error;
 
 pub fn main() {
     println!("custom-data-types started");
@@ -704,12 +706,42 @@ fn program4() {
     //   "e": [1, 2]
     // }
 
-    enum node<K, T> {
-        Hash(HashMap<K, Object<T>>),
+    struct InputData {
+        data: Vec<char>,
+        pos: usize,
     }
-    enum Object<T> {
-        String(T),
-        Vec(Vec<T>),
+    impl InputData {
+        fn new(val: String) -> Self {
+            let chars = val.chars().collect();
+            InputData {
+                data: chars,
+                pos: 0,
+            }
+        }
+        fn cur_char(&self) -> Option<&char> {
+            self.data.get(self.pos)
+        }
+
+        fn skip_ws(&mut self) {
+            // if let Some(' ' | '\n' | '\t' | '\r') = val {}
+            while let Some(' ' | '\n' | '\t' | '\r') = self.cur_char() {
+                self.pos += 1;
+            }
+        }
+    }
+
+    // enum Node<K, T> {
+    //     Vector(Vec<(K, Object<T>)>),
+    // }
+    #[derive(Debug)]
+    enum Obj {
+        Value(String),
+        Map(Vec<(String, Obj)>),
+        Vec(Vec<String>),
+    }
+
+    fn peek(data: &InputData) -> Option<&char> {
+        data.data.get(data.pos)
     }
 
     // {
@@ -732,14 +764,51 @@ fn program4() {
     if let Result::Err(e) = s {
         println!("{}", e);
     }
+    let data = InputData::new(data);
+    let mut data = InputData::new("  {}".to_string());
+    data.skip_ws();
 
-    fn get_between_brackets<'a>(hay: &'a str, bracket1: &str, bracket2: &str) -> &'a str {
-        hay.trim()
-            .trim_start_matches(bracket1)
-            .trim_end_matches(bracket2)
+    if data.cur_char().is_none() {
+        println!("No character found");
+        return;
+    }
+    println!("{:?}", data.cur_char());
+
+    let x = match data.cur_char() {
+        None => {
+            println!("No character found");
+            return;
+        }
+        Some('{') => parse_map(&mut data),
+        Some(_) => {
+            println!("Json Error");
+            return;
+        }
+    };
+
+    match x {
+        Ok(v) => println!("Array found:\n{:#?}", v),
+        Err(e) => eprintln!("Invalid Array,{}", e),
     }
 
-    println!("{}", get_between_brackets(&data, "{", "}"));
+    // {
+    //   "name": "Subash Acharya",
+    //   "age": "30",
+    //   "height": "5.5",
+    //   "email": "hubert"
+    // }
+    fn parse_map(data: &mut InputData) -> Result<Obj, String> {
+        println!("Inside parse_map");
+        data.pos += 1;
+        match data.cur_char() {
+            None => {
+                return Result::Err("json error, no closing for {{ bracket".to_string());
+            }
+            Some('}') => return Ok(Obj::Map(Vec::new())),
+            Some(_) => todo!(),
+        }
+        Result::Err("idk what i returned lol".to_string())
+    }
 }
 
 // ===== PROGRAM 5 — ⭐ Expression calculator (capstone, pulls in everything above) =====
