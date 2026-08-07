@@ -5,9 +5,7 @@
 
 // #![allow(unused)]
 
-use std::{fs::File, io::Read, iter::Map};
-
-use jiff::Error;
+use std::{fmt::Display, fs::File, io::Read, iter::Map};
 
 pub fn main() {
     println!("custom-data-types started");
@@ -723,7 +721,6 @@ fn program4() {
         }
 
         fn skip_ws(&mut self) {
-            // if let Some(' ' | '\n' | '\t' | '\r') = val {}
             while let Some(' ' | '\n' | '\t' | '\r') = self.cur_char() {
                 self.pos += 1;
             }
@@ -740,8 +737,15 @@ fn program4() {
         Vec(Vec<String>),
     }
 
-    fn peek(data: &InputData) -> Option<&char> {
-        data.data.get(data.pos)
+    impl Display for Obj {
+        ///         write!(f, "({}, {})", self.longitude, self.latitude)
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                Obj::Value(_) => write!(f, "IDK0"),
+                Obj::Map(items) => write!(f, "IDK1"),
+                Obj::Vec(items) => write!(f, "IDK2"),
+            }
+        }
     }
 
     // {
@@ -776,20 +780,22 @@ fn program4() {
 
     let x = match data.cur_char() {
         None => {
-            println!("No character found");
+            eprintln!("No character found");
             return;
         }
         Some('{') => parse_map(&mut data),
         Some(_) => {
-            println!("Json Error");
+            eprintln!("Json Error");
             return;
         }
     };
 
     match x {
-        Ok(v) => println!("Array found:\n{:#?}", v),
+        Ok(v) => println!("Array found:\n{}", v),
         Err(e) => eprintln!("Invalid Array,{}", e),
     }
+
+    fn pretty_print() {}
 
     // {
     //   "name": "Subash Acharya",
